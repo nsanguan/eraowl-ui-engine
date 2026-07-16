@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/inlinedialog.schema.json",
+  "title": "InlineDialog",
+  "description": "Modal-like dialog displayed inline on the current page",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "title": {
+      "type": "string"
+    },
+    "open": {
+      "type": "boolean",
+      "default": false
+    },
+    "width": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|%)$",
+      "default": "400px"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

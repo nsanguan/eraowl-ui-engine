@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/checkbox.schema.json",
+  "title": "Checkbox",
+  "description": "Toggle checkbox input",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string",
+      "default": "Checkbox"
+    },
+    "name": {
+      "type": "string"
+    },
+    "checked": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/datepicker.schema.json",
+  "title": "DatePicker",
+  "description": "Date selection input",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "placeholder": {
+      "type": "string",
+      "default": "Select date"
+    },
+    "minDate": {
+      "type": "string"
+    },
+    "maxDate": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

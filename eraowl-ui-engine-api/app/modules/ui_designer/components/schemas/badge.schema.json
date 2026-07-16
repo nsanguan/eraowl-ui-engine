@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/badge.schema.json",
+  "title": "Badge",
+  "description": "Content badge with variant styling",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "variant": {
+      "type": "string",
+      "enum": [
+        "info",
+        "success",
+        "warning",
+        "danger",
+        "neutral"
+      ],
+      "default": "neutral"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "md"
+      ],
+      "default": "md"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

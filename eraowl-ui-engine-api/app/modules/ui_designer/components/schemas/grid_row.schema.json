@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/gridrow.schema.json",
+  "title": "GridRow",
+  "description": "Horizontal grid row \u2014 layouts columns in a flex row",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "columns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12,
+      "default": 1
+    },
+    "gap": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|rem)$",
+      "default": "8px"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

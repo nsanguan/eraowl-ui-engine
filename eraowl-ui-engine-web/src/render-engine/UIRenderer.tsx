@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { componentRegistry } from './registry/componentRegistry'
+import { componentRegistry, normalizeType } from './registry/componentRegistry'
 import type { LayoutJson, Component } from './types'
 
 const CONTAINER_TYPES = new Set([
@@ -18,12 +18,13 @@ interface UIRendererProps {
 }
 
 function renderComponent(comp: Component, registry: Record<string, React.ComponentType<Record<string, unknown>>>): React.ReactNode {
-  const Component = registry[String(comp.type).toLowerCase()]
+  const normalizedType = normalizeType(comp.type)
+  const Component = registry[normalizedType]
   if (!Component) {
     return <div key={comp.id}>Unknown: {comp.type}</div>
   }
 
-  const isContainer = CONTAINER_TYPES.has(String(comp.type).toLowerCase())
+  const isContainer = CONTAINER_TYPES.has(normalizedType)
   const children = isContainer && Array.isArray((comp as unknown as { components?: Component[] }).components)
     ? (comp as unknown as { components: Component[] }).components.map((child) => renderComponent(child, registry))
     : undefined

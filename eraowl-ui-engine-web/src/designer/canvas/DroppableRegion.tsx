@@ -1,4 +1,3 @@
-import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -24,21 +23,16 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
   const {
     attributes,
     listeners,
-    setNodeRef: setSortableRef,
+    setNodeRef,
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({
     id: component.id,
     data: {
       type: "sortable-item",
       componentType: "Region",
-    },
-  });
-
-  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-    id: `region-${component.id}`,
-    data: {
       containerType: "region",
       containerId: component.id,
     },
@@ -59,10 +53,7 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
 
   return (
     <div
-      ref={(node) => {
-        setSortableRef(node);
-        setDroppableRef(node);
-      }}
+      ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}

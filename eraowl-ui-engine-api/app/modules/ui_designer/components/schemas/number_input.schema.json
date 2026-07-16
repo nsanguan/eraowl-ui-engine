@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/numberinput.schema.json",
+  "title": "NumberInput",
+  "description": "Numeric input field",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "min": {
+      "type": "number",
+      "default": 0
+    },
+    "max": {
+      "type": "number",
+      "default": 9999
+    },
+    "step": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

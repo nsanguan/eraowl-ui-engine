@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/contentrow.schema.json",
+  "title": "ContentRow",
+  "description": "Row with selection column, icon, description, and actions",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "selectable": {
+      "type": "boolean",
+      "default": false
+    },
+    "selectionType": {
+      "type": "string",
+      "enum": [
+        "checkbox",
+        "radio"
+      ],
+      "default": "checkbox"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/image.schema.json",
+  "title": "Image",
+  "description": "Single image display",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "src": {
+      "type": "string",
+      "format": "uri"
+    },
+    "alt": {
+      "type": "string",
+      "default": ""
+    },
+    "width": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|%|auto)$",
+      "default": "100%"
+    },
+    "height": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|%|auto)$",
+      "default": "auto"
+    },
+    "objectFit": {
+      "type": "string",
+      "enum": [
+        "cover",
+        "contain",
+        "fill",
+        "none"
+      ],
+      "default": "cover"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "src"
+  ]
+}

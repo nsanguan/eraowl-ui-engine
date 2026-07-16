@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/avatar.schema.json",
+  "title": "Avatar",
+  "description": "Displays an icon, image, or initials",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "src": {
+      "type": "string"
+    },
+    "initials": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ],
+      "default": "md"
+    },
+    "shape": {
+      "type": "string",
+      "enum": [
+        "circle",
+        "square",
+        "rounded"
+      ],
+      "default": "circle"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

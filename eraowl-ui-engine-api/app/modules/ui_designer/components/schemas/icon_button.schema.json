@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/iconbutton.schema.json",
+  "title": "IconButton",
+  "description": "Button with icon only (no text label)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "variant": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "secondary",
+        "ghost"
+      ],
+      "default": "ghost"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "md",
+        "lg"
+      ],
+      "default": "md"
+    },
+    "ariaLabel": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "icon"
+  ]
+}

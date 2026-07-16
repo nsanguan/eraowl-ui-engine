@@ -1,34 +1,29 @@
 from __future__ import annotations
 
+import logging
+import uuid
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
-from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import get_current_user, require_role
 from app.modules.ui_designer.codegen.generator import CodeGenerator
 from app.modules.ui_designer.codegen.scanner import ProjectScanner
 from app.modules.ui_designer.codegen.writer import SandboxWriter
 from app.modules.ui_designer.models import CodegenRun, CodegenTarget
+from app.modules.ui_designer.schemas import CodegenTargetCreate, CodegenTargetRead
 from app.schema_validation.validator import validate_layout_json
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
-
-
-class CodegenTargetCreate(BaseModel):
-    page_id: str
-    project_root: str
-    target_subpath: str
-    allowed_write_globs: list[str] = [
-        "apps/web/src/pages/generated/**",
-        "apps/web/src/components/generated/**",
-    ]
 
 
 class ScanResult(BaseModel):
@@ -78,14 +73,144 @@ async def _detect_framework(scanner: ProjectScanner) -> str:
     return "unknown"
 
 
+# ── CRUD Endpoints ───────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/codegen-targets",
+    status_code=status.HTTP_201_CREATED,
+    response_model=CodegenTargetRead,
+    dependencies=[Depends(require_role("ui_designer.editor", "ui_designer.admin"))],
+)
+async def create_codegen_target(
+    payload: CodegenTargetCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+) -> CodegenTarget:
+    """Register a new codegen target for a page."""
+    # Validate that project_root is an absolute path
+    from pathlib import Path
+
+    p = Path(payload.project_root)
+    if not p.is_absolute():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="project_root must be an absolute path",
+        )
+
+    target = CodegenTarget(
+        page_id=payload.page_id,
+        project_root=payload.project_root,
+        target_subpath=payload.target_subpath,
+        allowed_write_globs=payload.allowed_write_globs or [
+            "apps/web/src/pages/generated/**",
+            "apps/web/src/components/generated/**",
+        ],
+    )
+    db.add(target)
+    await db.commit()
+    await db.refresh(target)
+    logger.info("Created codegen target %s for page %s", target.id, target.page_id)
+    return target
+
+
+@router.get(
+    "/codegen-targets",
+    dependencies=[Depends(require_role("ui_designer.viewer", "ui_designer.editor", "ui_designer.admin"))],
+)
+async def list_codegen_targets(
+    page_id: str | None = Query(None, description="Filter by page ID"),
+    db: Annotated[AsyncSession, Depends(get_db)] = None,  # type: ignore[assignment]
+    user: Annotated[dict[str, Any], Depends(get_current_user)] = None,  # type: ignore[assignment]
+) -> list[CodegenTargetRead]:
+    """List codegen targets scoped to pages owned by the caller.
+
+    Admins see all targets. Non-admins only see targets for pages they own.
+    """
+    from app.core.security import is_admin
+    from app.modules.ui_designer.models import Page
+
+    stmt = select(CodegenTarget).order_by(desc(CodegenTarget.created_at))
+
+    if page_id:
+        stmt = stmt.where(CodegenTarget.page_id == page_id)
+
+    # Owner scoping via join to pages table
+    if not is_admin(user):
+        owner_id_str = user.get("sub")
+        if owner_id_str:
+            try:
+                owner_uuid = uuid.UUID(str(owner_id_str))
+            except (ValueError, AttributeError, TypeError):
+                owner_uuid = None
+            if owner_uuid is not None:
+                stmt = stmt.join(Page, CodegenTarget.page_id == Page.id).where(  # type: ignore[arg-type]
+                    Page.owner_id == owner_uuid  # type: ignore[arg-type]
+                )
+
+    result = await db.execute(stmt)
+    targets = result.scalars().all()
+    return [CodegenTargetRead.model_validate(t) for t in targets]
+
+
+@router.get(
+    "/codegen-targets/{target_id}",
+    response_model=CodegenTargetRead,
+    dependencies=[Depends(require_role("ui_designer.viewer", "ui_designer.editor", "ui_designer.admin"))],
+)
+async def get_codegen_target(
+    target_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+) -> CodegenTarget:
+    """Get a single codegen target by ID."""
+    return await _get_target(db, target_id)
+
+
+@router.delete(
+    "/codegen-targets/{target_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("ui_designer.admin"))],
+)
+async def delete_codegen_target(
+    target_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+) -> None:
+    """Delete a codegen target."""
+    target = await _get_target(db, target_id)
+    await db.delete(target)
+    await db.commit()
+    logger.info("Deleted codegen target %s", target_id)
+
+
+# ── Scan Endpoint ────────────────────────────────────────────────────────────
+
+
 @router.get(
     "/codegen-targets/{target_id}/scan",
     dependencies=[Depends(require_role("ui_designer.viewer", "ui_designer.editor", "ui_designer.admin"))],
 )
-async def scan_target(target_id: str) -> ScanResult:
-    scanner = ProjectScanner(settings.TARGET_PROJECT_ROOT)
-    scanner.scan()
+async def scan_target(
+    target_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+) -> ScanResult:
+    """Scan a codegen target's project root to detect framework & convention.
+
+    Loads the target from DB to use its actual project_root, then updates
+    the target record with the detected framework.
+    """
+    target = await _get_target(db, target_id)
+    scanner = ProjectScanner(target.project_root)
     framework = await _detect_framework(scanner)
+
+    # Persist detection result back to the target record
+    target.framework_detected = framework
+    target.last_scanned_at = datetime.now(UTC)
+    db.add(target)
+    await db.commit()
+
     return ScanResult(
         framework_detected=framework,
         component_style="PascalCase + named export",
@@ -109,9 +234,12 @@ async def generate_code(
     if payload is not None:
         page_id = payload.page_id
 
-    layout = None
+    layout: dict[str, Any] | None = None
     if payload is not None and payload.layout is not None:
-        layout = payload.layout
+        # payload.layout may be a raw layout {"schemaVersion": ..., "regions": [...]}
+        # or already wrapped {"layout_json": {...}}. Normalize to unwrapped form.
+        raw = payload.layout
+        layout = raw.get("layout_json", raw)
     elif page_id is not None:
         # Load the real latest layout for the page.
         from app.modules.ui_designer.service import LayoutService
@@ -122,7 +250,7 @@ async def generate_code(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No layout found for page {page_id}",
             )
-        layout = {"layout_json": latest.layout_json}
+        layout = latest.layout_json
 
     if layout is None:
         raise HTTPException(
@@ -131,8 +259,7 @@ async def generate_code(
         )
 
     # §6 Security Contract: validate layout_json against JSON Schema before codegen
-    layout_json = layout.get("layout_json", layout)
-    errors = validate_layout_json(layout_json)
+    errors = validate_layout_json(layout)
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -142,7 +269,7 @@ async def generate_code(
     created_by = (user or {}).get("sub") or (user or {}).get("email") or (user or {}).get("user_id")
 
     generator = CodeGenerator(target.project_root, target.target_subpath)
-    files = generator.generate_page(layout)
+    files = generator.generate_page({"layout_json": layout})
 
     writer = SandboxWriter(target.project_root, target.allowed_write_globs)
 

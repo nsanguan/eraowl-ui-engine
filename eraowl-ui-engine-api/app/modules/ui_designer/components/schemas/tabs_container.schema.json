@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/tabscontainer.schema.json",
+  "title": "TabsContainer",
+  "description": "Tabbed container for organizing content into panels",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "tabs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "activeTab": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

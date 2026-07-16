@@ -1,4 +1,3 @@
-import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -23,21 +22,16 @@ export function DroppableGridColumn({ component }: DroppableGridColumnProps) {
   const {
     attributes,
     listeners,
-    setNodeRef: setSortableRef,
+    setNodeRef,
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({
     id: component.id,
     data: {
       type: "sortable-item",
       componentType: "GridColumn",
-    },
-  });
-
-  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-    id: `droppable-${component.id}`,
-    data: {
       containerType: "gridcol",
       containerId: component.id,
     },
@@ -59,10 +53,7 @@ export function DroppableGridColumn({ component }: DroppableGridColumnProps) {
 
   return (
     <div
-      ref={(node) => {
-        setSortableRef(node);
-        setDroppableRef(node);
-      }}
+      ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}

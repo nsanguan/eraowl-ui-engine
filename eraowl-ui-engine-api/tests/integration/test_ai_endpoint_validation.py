@@ -54,11 +54,36 @@ class TestComponentTypesSourceOfTruth:
 
     def test_component_types_match_schema_enum(self):
         expected = [
-            "Region", "GridRow", "GridColumn",
+            "Region", "Standard",
+            "GridRow", "GridColumn",
+            "FlexboxContainer", "ContentBlock", "ContentRow",
+            "Hero", "Image", "HelpText",
+            "Collapsible", "InlineDialog",
+            "ButtonContainer", "TitleBar",
+            "TabsContainer", "RegionDisplaySelector",
+            "StaticContent", "PlasqlDynamicContent",
+            "Alert",
+            "Avatar",
+            "Badge", "BadgesList",
+            "Breadcrumb",
+            "CardRegions", "CardTemplates",
+            "Calendar", "Carousel",
+            "Charts",
+            "ClassicReport", "InteractiveReport", "InteractiveGrid",
+            "ColumnToggleReport", "ReflowReport",
+            "ContextualInfo", "ValueAttributePairs",
+            "Comments",
+            "FormField",
+            "LinksList", "ListView", "MediaList",
+            "MenuBar", "MenuPopup", "NavigationBar",
+            "MetricCard",
+            "Timeline", "Tree",
+            "Wizard",
             "InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput",
+            "Button", "ButtonGroup", "IconButton", "Link",
             "Lov", "LovSelect",
             "Table", "Card",
-            "Button", "IconButton", "Link",
+            "ScrollBar",
         ]
         assert expected == COMPONENT_TYPES
 

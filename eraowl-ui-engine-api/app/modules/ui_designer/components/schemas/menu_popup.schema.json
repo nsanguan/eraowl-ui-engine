@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/menupopup.schema.json",
+  "title": "MenuPopup",
+  "description": "Popup menu triggered by a button",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "triggerLabel": {
+      "type": "string",
+      "default": "Menu"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

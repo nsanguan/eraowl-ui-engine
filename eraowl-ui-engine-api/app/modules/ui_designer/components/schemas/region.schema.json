@@ -2,16 +2,51 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://eraowl.dev/schemas/region.schema.json",
   "title": "Region",
+  "description": "Generic container region that can hold child components",
   "type": "object",
   "properties": {
-    "id": { "type": "string" },
-    "className": { "type": "string" },
-    "style": { "type": "object" },
-    "children": { "type": "array", "items": { "type": "string" } },
-    "direction": { "type": "string", "enum": ["row", "column"], "default": "row" },
-    "gap": { "type": "string", "default": "0px" },
-    "padding": { "type": "string", "default": "0px" },
-    "wrap": { "type": "boolean", "default": false }
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "title": {
+      "type": "string"
+    },
+    "className": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "row",
+        "column"
+      ],
+      "default": "column"
+    },
+    "gap": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|rem|%)$",
+      "default": "8px"
+    },
+    "padding": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|rem|%)$",
+      "default": "16px"
+    },
+    "wrap": {
+      "type": "boolean",
+      "default": false
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   },
-  "required": ["id"]
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title"
+  ]
 }

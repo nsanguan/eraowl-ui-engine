@@ -1,21 +1,58 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://eraowl.dev/schemas/lov_select.schema.json",
+  "$id": "https://eraowl.dev/schemas/lovselect.schema.json",
   "title": "LovSelect",
-  "description": "Select dropdown backed by a Lov resolver",
+  "description": "Select dropdown backed by a data resolver (cascading LOV)",
   "type": "object",
   "properties": {
-    "id": { "type": "string" },
-    "label": { "type": "string" },
-    "resolverName": { "type": "string" },
-    "resolverParams": { "type": "object", "default": {} },
-    "valueField": { "type": "string", "default": "value" },
-    "labelField": { "type": "string", "default": "label" },
-    "placeholder": { "type": "string", "default": "Select..." },
-    "multiple": { "type": "boolean", "default": false },
-    "clearable": { "type": "boolean", "default": true },
-    "disabled": { "type": "boolean", "default": false },
-    "bindTo": { "type": "string", "description": "Model field this select is bound to" }
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "resolverName": {
+      "type": "string"
+    },
+    "resolverParams": {
+      "type": "object",
+      "default": {}
+    },
+    "valueField": {
+      "type": "string",
+      "default": "value"
+    },
+    "labelField": {
+      "type": "string",
+      "default": "label"
+    },
+    "placeholder": {
+      "type": "string",
+      "default": "Select..."
+    },
+    "multiple": {
+      "type": "boolean",
+      "default": false
+    },
+    "clearable": {
+      "type": "boolean",
+      "default": true
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   },
-  "required": ["id", "resolverName"]
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "resolverName"
+  ]
 }

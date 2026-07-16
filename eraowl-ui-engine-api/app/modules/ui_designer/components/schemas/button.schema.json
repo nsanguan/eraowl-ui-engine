@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/button.schema.json",
+  "title": "Button",
+  "description": "Action button with label, icon, and variant",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string",
+      "default": "Button"
+    },
+    "variant": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "secondary",
+        "danger",
+        "ghost",
+        "link"
+      ],
+      "default": "primary"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "md",
+        "lg"
+      ],
+      "default": "md"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "iconPosition": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "default": "left"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "action": {
+      "type": "string",
+      "description": "Action identifier for event handling"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

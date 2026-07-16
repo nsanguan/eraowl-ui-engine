@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/interactivereport.schema.json",
+  "title": "InteractiveReport",
+  "description": "Report with search, sort, and column controls",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "searchable": {
+      "type": "boolean",
+      "default": true
+    },
+    "pageSize": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 25
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/calendar.schema.json",
+  "title": "Calendar",
+  "description": "Calendar display \u2014 requires FullCalendar integration",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "view": {
+      "type": "string",
+      "enum": [
+        "month",
+        "week",
+        "day"
+      ],
+      "default": "month"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

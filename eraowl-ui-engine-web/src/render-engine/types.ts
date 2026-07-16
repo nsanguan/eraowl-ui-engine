@@ -37,6 +37,7 @@ export interface FormBinding {
 }
 
 export type ComponentType =
+  // Legacy core types
   | "region" | "Region"
   | "gridRow" | "GridRow"
   | "gridColumn" | "GridColumn"
@@ -53,7 +54,59 @@ export type ComponentType =
   | "card" | "Card"
   | "button" | "Button"
   | "iconButton" | "IconButton"
-  | "link" | "Link";
+  | "link" | "Link"
+  // APEX Universal Theme Components — Layout
+  | "standard" | "Standard"
+  | "flexboxContainer" | "FlexboxContainer"
+  | "contentBlock" | "ContentBlock"
+  | "contentRow" | "ContentRow"
+  | "hero" | "Hero"
+  | "image" | "Image"
+  | "helpText" | "HelpText"
+  | "collapsible" | "Collapsible"
+  | "inlineDialog" | "InlineDialog"
+  | "buttonContainer" | "ButtonContainer"
+  | "titleBar" | "TitleBar"
+  | "tabsContainer" | "TabsContainer"
+  | "regionDisplaySelector" | "RegionDisplaySelector"
+  | "staticContent" | "StaticContent"
+  | "plasqlDynamicContent" | "PlasqlDynamicContent"
+  // APEX Universal Theme Components — Feedback
+  | "alert" | "Alert"
+  | "badge" | "Badge"
+  | "badgesList" | "BadgesList"
+  // APEX Universal Theme Components — Navigation
+  | "breadcrumb" | "Breadcrumb"
+  | "linksList" | "LinksList"
+  | "listView" | "ListView"
+  | "mediaList" | "MediaList"
+  | "menuBar" | "MenuBar"
+  | "menuPopup" | "MenuPopup"
+  | "navigationBar" | "NavigationBar"
+  | "tree" | "Tree"
+  | "wizard" | "Wizard"
+  // APEX Universal Theme Components — Data
+  | "classicReport" | "ClassicReport"
+  | "interactiveReport" | "InteractiveReport"
+  | "interactiveGrid" | "InteractiveGrid"
+  | "columnToggleReport" | "ColumnToggleReport"
+  | "reflowReport" | "ReflowReport"
+  | "contextualInfo" | "ContextualInfo"
+  | "valueAttributePairs" | "ValueAttributePairs"
+  | "calendar" | "Calendar"
+  | "carousel" | "Carousel"
+  | "charts" | "Charts"
+  | "cardRegions" | "CardRegions"
+  | "cardTemplates" | "CardTemplates"
+  | "comments" | "Comments"
+  | "metricCard" | "MetricCard"
+  | "timeline" | "Timeline"
+  // APEX Universal Theme Components — Partials
+  | "avatar" | "Avatar"
+  | "buttonGroup" | "ButtonGroup"
+  | "formField" | "FormField"
+  // Utility
+  | "scrollBar" | "ScrollBar";
 
 export interface Component {
   id: string;

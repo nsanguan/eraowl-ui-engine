@@ -123,4 +123,76 @@ describe('formValidator', () => {
     expect(result.valid).toBe(false)
     expect(Object.keys(result.errors)).toHaveLength(2)
   })
+
+  it('validates nested components inside containers recursively', () => {
+    const layout = ({
+      schemaVersion: '1.0.0',
+      regions: [{
+        id: 'r1',
+        title: 'Form',
+        components: [
+          {
+            id: 'gridRow',
+            type: 'GridRow' as Component['type'],
+            position: { x: 0, y: 0, width: 800, height: 60 },
+            components: [
+              {
+                id: 'gridCol',
+                type: 'GridColumn' as Component['type'],
+                position: { x: 0, y: 0, width: 400, height: 60 },
+                components: [
+                  {
+                    id: 'nestedField',
+                    type: 'InputText' as Component['type'],
+                    position: { x: 0, y: 0, width: 200, height: 40 },
+                    validation: { required: true },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }],
+    }) as unknown as LayoutJson
+
+    // Nested required field is empty → should fail
+    const result = formValidator(layout, { nestedField: '' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.nestedField).toContain('This field is required')
+  })
+
+  it('validates nested component passes when value is present', () => {
+    const layout = ({
+      schemaVersion: '1.0.0',
+      regions: [{
+        id: 'r1',
+        title: 'Form',
+        components: [
+          {
+            id: 'gridRow',
+            type: 'GridRow' as Component['type'],
+            position: { x: 0, y: 0, width: 800, height: 60 },
+            components: [
+              {
+                id: 'gridCol',
+                type: 'GridColumn' as Component['type'],
+                position: { x: 0, y: 0, width: 400, height: 60 },
+                components: [
+                  {
+                    id: 'nestedField',
+                    type: 'InputText' as Component['type'],
+                    position: { x: 0, y: 0, width: 200, height: 40 },
+                    validation: { required: true },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }],
+    }) as unknown as LayoutJson
+
+    const result = formValidator(layout, { nestedField: 'has value' })
+    expect(result.valid).toBe(true)
+  })
 })

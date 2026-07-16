@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     AI_FALLBACK_PROVIDER: str | None = None
     AI_FALLBACK_API_KEY: str = ""
     AI_FALLBACK_MODEL: str | None = None
+    AI_FALLBACK_BASE_URL: str = ""
+    """Base URL for the fallback AI provider. If empty, falls back to the
+    primary ``AI_BASE_URL`` (which means the fallback only helps if the
+    primary API key or model is the problem, not if the service endpoint
+    itself is unreachable). Set this to a different provider's endpoint
+    for true geographic/network-level redundancy."""
 
     # ── AI Feature Flags ────────────────────────────────────────────────────
     AI_CODEGEN_ENABLED: bool = True

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/scrollbar.schema.json",
+  "title": "ScrollBar",
+  "description": "Scrollable container with custom vertical or horizontal scrollbar",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "orientation": {
+      "type": "string",
+      "enum": [
+        "vertical",
+        "horizontal"
+      ],
+      "default": "vertical"
+    },
+    "height": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|%|vh)$",
+      "default": "300px"
+    },
+    "width": {
+      "type": "string",
+      "pattern": "^[0-9]+(px|%|vw)$",
+      "default": "100%"
+    },
+    "autoHide": {
+      "type": "boolean",
+      "default": false
+    },
+    "thickness": {
+      "type": "string",
+      "enum": [
+        "thin",
+        "auto"
+      ],
+      "default": "thin"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

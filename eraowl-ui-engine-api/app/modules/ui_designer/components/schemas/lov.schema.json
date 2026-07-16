@@ -5,13 +5,37 @@
   "description": "List-of-values data source component",
   "type": "object",
   "properties": {
-    "id": { "type": "string" },
-    "resolverName": { "type": "string", "description": "Name of the resolver to fetch data" },
-    "resolverParams": { "type": "object", "default": {} },
-    "valueField": { "type": "string", "default": "value" },
-    "labelField": { "type": "string", "default": "label" },
-    "cache": { "type": "boolean", "default": true },
-    "cacheTtl": { "type": "integer", "default": 300, "description": "Cache TTL in seconds" }
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "resolverName": {
+      "type": "string"
+    },
+    "resolverParams": {
+      "type": "object",
+      "default": {}
+    },
+    "valueField": {
+      "type": "string",
+      "default": "value"
+    },
+    "labelField": {
+      "type": "string",
+      "default": "label"
+    },
+    "cache": {
+      "type": "boolean",
+      "default": true
+    },
+    "cacheTtl": {
+      "type": "integer",
+      "default": 300
+    }
   },
-  "required": ["id", "resolverName"]
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "resolverName"
+  ]
 }

@@ -1,4 +1,4 @@
-import type { LayoutJson } from '../types'
+import type { LayoutJson, Component } from '../types'
 
 interface ValidationResult {
   valid: boolean
@@ -11,9 +11,17 @@ export function formValidator(
 ): ValidationResult {
   const errors: Record<string, string[]> = {}
 
-  for (const region of layout.regions) {
-    for (const comp of region.components) {
-      if (!comp.validation) continue
+  // Walk the component tree recursively, handling nested containers
+  // (GridRow → GridColumn → InputText etc.)
+  function walkComponents(components: Component[]): void {
+    for (const comp of components) {
+      if (!comp.validation) {
+        // Still recurse into containers even without validation rules
+        if (Array.isArray((comp as unknown as { components?: Component[] }).components)) {
+          walkComponents((comp as unknown as { components: Component[] }).components)
+        }
+        continue
+      }
       const value = formValues[comp.id]
       const fieldErrors: string[] = []
 
@@ -39,7 +47,6 @@ export function formValidator(
 
       if (comp.validation.pattern && typeof value === 'string') {
         const pattern = comp.validation.pattern
-        // Cap pattern length to limit ReDoS surface; reject oversized patterns.
         if (pattern.length > 200) {
           fieldErrors.push('Invalid format')
         } else {
@@ -49,7 +56,6 @@ export function formValidator(
               fieldErrors.push('Invalid format')
             }
           } catch {
-            // Invalid/unsafe pattern → treat as no-match rather than throwing.
             fieldErrors.push('Invalid format')
           }
         }
@@ -58,7 +64,16 @@ export function formValidator(
       if (fieldErrors.length > 0) {
         errors[comp.id] = fieldErrors
       }
+
+      // Recurse into nested children (containers: Region → GridRow → GridColumn etc.)
+      if (Array.isArray((comp as unknown as { components?: Component[] }).components)) {
+        walkComponents((comp as unknown as { components: Component[] }).components)
+      }
     }
+  }
+
+  for (const region of layout.regions) {
+    walkComponents(region.components)
   }
 
   return {

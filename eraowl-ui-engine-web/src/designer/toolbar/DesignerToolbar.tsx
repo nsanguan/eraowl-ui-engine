@@ -1,5 +1,7 @@
 import { useStore } from "zustand";
 import { useUIStore } from "../../store/useUIStore";
+import { ProjectSettingsModal } from "./ProjectSettingsModal";
+import { useState } from "react";
 
 export function DesignerToolbar() {
   const pageTitle = useUIStore((s) => s.pageTitle);
@@ -10,6 +12,8 @@ export function DesignerToolbar() {
   const toggleGrid = useUIStore((s) => s.toggleGrid);
   const components = useUIStore((s) => s.components);
   const saveLayout = useUIStore((s) => s.saveLayout);
+
+  const [showProjectSettings, setShowProjectSettings] = useState(false);
 
   const undo = () => useUIStore.temporal.getState().undo();
   const redo = () => useUIStore.temporal.getState().redo();
@@ -111,6 +115,16 @@ export function DesignerToolbar() {
 
         <button
           className="designer-toolbar__btn"
+          onClick={() => setShowProjectSettings(true)}
+          title="Configure target project integration"
+        >
+          ⚙️ Project Settings
+        </button>
+
+        <div className="designer-toolbar__divider" />
+
+        <button
+          className="designer-toolbar__btn"
           onClick={handlePreview}
           title="Preview in new tab"
         >
@@ -124,6 +138,11 @@ export function DesignerToolbar() {
           💾 Save
         </button>
       </div>
+
+      <ProjectSettingsModal
+        isOpen={showProjectSettings}
+        onClose={() => setShowProjectSettings(false)}
+      />
     </div>
   );
 }

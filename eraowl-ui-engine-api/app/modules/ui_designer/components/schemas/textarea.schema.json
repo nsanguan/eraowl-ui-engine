@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/textarea.schema.json",
+  "title": "Textarea",
+  "description": "Multi-line text input area",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "rows": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 4
+    },
+    "maxLength": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

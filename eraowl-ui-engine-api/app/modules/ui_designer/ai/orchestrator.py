@@ -144,8 +144,9 @@ class AIOrchestrator:
             )
             try:
                 fallback_model = settings.AI_FALLBACK_MODEL or self.model
+                fallback_base_url = settings.AI_FALLBACK_BASE_URL or self.base_url
                 return await self._call_provider(
-                    base_url=settings.AI_BASE_URL,
+                    base_url=fallback_base_url,
                     api_key=settings.AI_FALLBACK_API_KEY,
                     model=fallback_model,
                     messages=messages,

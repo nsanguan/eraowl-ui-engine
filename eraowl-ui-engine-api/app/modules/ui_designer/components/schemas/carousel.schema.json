@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/carousel.schema.json",
+  "title": "Carousel",
+  "description": "Slideshow carousel of sub-regions or content items",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "autoPlay": {
+      "type": "boolean",
+      "default": false
+    },
+    "interval": {
+      "type": "integer",
+      "default": 3000
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ]
+}

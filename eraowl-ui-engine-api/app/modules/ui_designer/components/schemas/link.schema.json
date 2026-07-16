@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/link.schema.json",
+  "title": "Link",
+  "description": "Hyperlink to internal or external URL",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string",
+      "default": "Link"
+    },
+    "href": {
+      "type": "string",
+      "format": "uri-reference",
+      "default": "#"
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "_self",
+        "_blank",
+        "_parent"
+      ],
+      "default": "_self"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "label"
+  ]
+}

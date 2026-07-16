@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/metriccard.schema.json",
+  "title": "MetricCard",
+  "description": "Single key metric display with label, value, and optional trend",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique component identifier"
+    },
+    "label": {
+      "type": "string"
+    },
+    "value": {
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "icon": {
+      "type": "string"
+    },
+    "trend": {
+      "type": "string",
+      "enum": [
+        "up",
+        "down",
+        "neutral"
+      ],
+      "default": "neutral"
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "number",
+        "currency",
+        "percent"
+      ],
+      "default": "number"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "label"
+  ]
+}

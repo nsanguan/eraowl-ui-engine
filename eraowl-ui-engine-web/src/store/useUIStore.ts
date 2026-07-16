@@ -2,6 +2,19 @@ import { create } from "zustand";
 import { temporal } from "zundo";
 import { apiClient } from "../api/client";
 
+/** UUID v4 generator that works in both secure and non-secure contexts. */
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback for non-secure contexts (HTTP on non-localhost)
+  // Uses Math.random (not crypto-secure, but sufficient for UI component IDs)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 export interface DesignComponent {
   id: string;
   type: string;
@@ -45,7 +58,7 @@ export const useUIStore = create<UIState>()(
       toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
 
       addComponent: (type, defaultProps, name, parentId = null) => {
-        const id = `comp_${crypto.randomUUID()}`;
+        const id = `comp_${generateId()}`;
         set((s) => ({
           components: [
             ...s.components,
