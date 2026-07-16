@@ -1,0 +1,74 @@
+{
+  "name": "eraowl-ui-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/eraowl-ui-engine/eraowl-ui-engine.umd.js",
+  "module": "./dist/eraowl-ui-engine/eraowl-ui-engine.es.js",
+  "types": "./dist/eraowl-ui-engine/index.d.ts",
+  "files": [
+    "dist/eraowl-ui-engine",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/eraowl-ui-engine/index.d.ts",
+      "import": "./dist/eraowl-ui-engine/eraowl-ui-engine.es.js",
+      "require": "./dist/eraowl-ui-engine/eraowl-ui-engine.umd.js"
+    },
+    "./themes/eut/eut-runtime.css": "./dist/eraowl-ui-engine/themes/eut/eut-runtime.css",
+    "./themes/eut/styles/*": "./dist/eraowl-ui-engine/themes/eut/styles/*"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:theme-css && npm run build:designer && npm run build:lib",
+    "build:designer": "BUILD_MODE=designer vite build",
+    "build:lib": "BUILD_MODE=lib vite build --config vite.lib.config.ts",
+    "build:theme-css": "tsx scripts/build-theme-css.ts",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@monaco-editor/react": "^4.6.0",
+    "ajv": "^8.17.0",
+    "dompurify": "^3.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@tailwindcss/vite": "^4.3.2",
+    "@tanstack/react-query-devtools": "^5.101.2",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/dompurify": "^3.0.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react-swc": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "jsdom": "^25.0.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^4.0.0",
+    "tslib": "^2.8.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vite-plugin-static-copy": "^2.0.0",
+    "vitest": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.0"
+  }
+}

@@ -1,0 +1,46 @@
+:root {
+  /* Color tokens */
+  --eut-color-primary: #6366f1;
+  --eut-color-primary-hover: #4f46e5;
+  --eut-color-secondary: #64748b;
+  --eut-color-background: #ffffff;
+  --eut-color-surface: #f8fafc;
+  --eut-color-error: #ef4444;
+  --eut-color-success: #22c55e;
+  --eut-color-warning: #f59e0b;
+  --eut-color-text: #0f172a;
+  --eut-color-text-secondary: #64748b;
+  --eut-color-border: #e2e8f0;
+  --eut-color-border-focus: #6366f1;
+
+  /* Radius tokens */
+  --eut-radius-sm: 4px;
+  --eut-radius-md: 8px;
+  --eut-radius-lg: 12px;
+  --eut-radius-full: 9999px;
+
+  /* Spacing tokens */
+  --eut-spacing-xs: 4px;
+  --eut-spacing-sm: 8px;
+  --eut-spacing-md: 16px;
+  --eut-spacing-lg: 24px;
+  --eut-spacing-xl: 32px;
+
+  /* Typography tokens */
+  --eut-typography-font-family: Inter, system-ui, sans-serif;
+  --eut-typography-font-size-xs: 12px;
+  --eut-typography-font-size-sm: 14px;
+  --eut-typography-font-size-md: 16px;
+  --eut-typography-font-size-lg: 20px;
+  --eut-typography-font-size-xl: 24px;
+  --eut-typography-font-weight-normal: 400;
+  --eut-typography-font-weight-medium: 500;
+  --eut-typography-font-weight-semibold: 600;
+  --eut-typography-line-height-tight: 1.25;
+  --eut-typography-line-height-normal: 1.5;
+
+  /* Shadow tokens */
+  --eut-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --eut-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --eut-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}

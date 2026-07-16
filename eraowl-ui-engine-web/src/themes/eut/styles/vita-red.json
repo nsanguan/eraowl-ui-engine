@@ -1,0 +1,20 @@
+{
+  "name": "vita-red",
+  "displayName": "Vita Red",
+  "baseStyle": "vita",
+  "overrides": {
+    "color": {
+      "primary": "#dc2626",
+      "primary-hover": "#b91c1c",
+      "border-focus": "#dc2626"
+    }
+  },
+  "componentOverrides": {
+    "button": {
+      "color": {
+        "primary": "#dc2626",
+        "primary-hover": "#b91c1c"
+      }
+    }
+  }
+}

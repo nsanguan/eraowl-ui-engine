@@ -1,0 +1,75 @@
+{
+  "region": {
+    "variant": {
+      "type": "enum",
+      "values": ["default", "card", "bordered", "flat"],
+      "default": "default",
+      "description": "Visual variant of the region"
+    },
+    "padding": {
+      "type": "enum",
+      "values": ["none", "sm", "md", "lg"],
+      "default": "md",
+      "description": "Internal padding size"
+    }
+  },
+  "lov": {
+    "displayMode": {
+      "type": "enum",
+      "values": ["list", "grid", "inline"],
+      "default": "list",
+      "description": "How items are displayed"
+    },
+    "selectable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether items can be selected"
+    }
+  },
+  "lov_select": {
+    "size": {
+      "type": "enum",
+      "values": ["small", "medium", "large"],
+      "default": "medium",
+      "description": "Size of the select input"
+    },
+    "clearable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow clearing the selection"
+    },
+    "searchable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable search filtering"
+    }
+  },
+  "text_field": {
+    "size": {
+      "type": "enum",
+      "values": ["small", "medium", "large"],
+      "default": "medium"
+    },
+    "variant": {
+      "type": "enum",
+      "values": ["outlined", "filled", "underlined"],
+      "default": "outlined"
+    }
+  },
+  "button": {
+    "variant": {
+      "type": "enum",
+      "values": ["primary", "secondary", "ghost", "danger"],
+      "default": "primary"
+    },
+    "size": {
+      "type": "enum",
+      "values": ["sm", "md", "lg"],
+      "default": "md"
+    },
+    "fullWidth": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

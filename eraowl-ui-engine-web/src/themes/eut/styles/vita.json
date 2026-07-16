@@ -1,0 +1,30 @@
+{
+  "name": "vita",
+  "displayName": "Vita",
+  "baseStyle": "base",
+  "overrides": {
+    "color": {
+      "primary": "#6366f1",
+      "primary-hover": "#4f46e5",
+      "background": "#ffffff",
+      "surface": "#f8fafc"
+    },
+    "radius": {
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px"
+    }
+  },
+  "componentOverrides": {
+    "region": {
+      "color": {
+        "background": "#f8fafc"
+      }
+    },
+    "button": {
+      "radius": {
+        "md": "8px"
+      }
+    }
+  }
+}

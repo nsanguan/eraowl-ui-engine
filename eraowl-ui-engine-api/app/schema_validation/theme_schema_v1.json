@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/theme-v1.json",
+  "title": "EraOwl Theme Bundle v1",
+  "type": "object",
+  "required": ["themeId", "tokens", "templateOptions"],
+  "properties": {
+    "themeId": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+    "displayName": { "type": "string" },
+    "tokens": {
+      "type": "object",
+      "required": ["color", "radius", "spacing", "typography"],
+      "properties": {
+        "color": {
+          "type": "object",
+          "required": ["bg", "fg", "accent", "muted"],
+          "properties": {
+            "bg": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "fg": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "accent": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "muted": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "success": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "danger": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+          },
+          "additionalProperties": false
+        },
+        "radius": {
+          "type": "object",
+          "properties": {
+            "sm": { "type": "string", "enum": ["0px", "2px", "4px", "6px", "8px"] },
+            "md": { "type": "string", "enum": ["4px", "8px", "12px", "16px"] },
+            "lg": { "type": "string", "enum": ["8px", "12px", "16px", "24px", "9999px"] }
+          },
+          "additionalProperties": false
+        },
+        "spacing": {
+          "type": "object",
+          "properties": {
+            "density": { "type": "string", "enum": ["compact", "cozy", "comfortable"] },
+            "unit": { "type": "number", "minimum": 1, "maximum": 16 }
+          },
+          "additionalProperties": false
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "fontFamily": { "type": "string" },
+            "fontSizeBase": { "type": "string", "pattern": "^[0-9]+(px|rem)$" },
+            "fontWeightBody": { "type": ["string", "number"] },
+            "fontWeightHead": { "type": ["string", "number"] }
+          },
+          "additionalProperties": false
+        },
+        "shadow": {
+          "type": "object",
+          "properties": {
+            "sm": { "type": "string" },
+            "md": { "type": "string" },
+            "lg": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "templateOptions": {
+      "type": "object",
+      "description": "Map component_type → { optionKey: { type, enum, default, appliesClass } }",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "required": ["type", "default"],
+          "properties": {
+            "type": { "enum": ["string", "boolean", "number"] },
+            "enum": { "type": "array", "items": { "type": "string" } },
+            "default": { "type": ["string", "boolean", "number", "null"] },
+            "appliesClass": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

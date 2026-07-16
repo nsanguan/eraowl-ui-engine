@@ -1,0 +1,15 @@
+# dbmate configuration for eraowl-ui-engine-api
+# https://github.com/amacneil/dbmate
+
+# PostgreSQL connection string (External — 202.71.1.13:5435)
+# Format: postgres://user:password@host:port/database?sslmode=disable
+DATABASE_URL: "postgres://eraowlui_admin:EraOwl2026@202.71.1.13:5435/eraowlui?sslmode=disable"
+
+# Migrations directory
+MIGRATIONS_DIR: "./db/migrations"
+
+# Table to track applied migrations
+MIGRATIONS_TABLE: "dbmate_migrations"
+
+# SQL file dialect
+SQL_FILE_DIALECT: "postgres"

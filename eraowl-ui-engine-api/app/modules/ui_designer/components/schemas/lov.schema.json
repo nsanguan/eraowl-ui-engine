@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/lov.schema.json",
+  "title": "Lov",
+  "description": "List-of-values data source component",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "resolverName": { "type": "string", "description": "Name of the resolver to fetch data" },
+    "resolverParams": { "type": "object", "default": {} },
+    "valueField": { "type": "string", "default": "value" },
+    "labelField": { "type": "string", "default": "label" },
+    "cache": { "type": "boolean", "default": true },
+    "cacheTtl": { "type": "integer", "default": 300, "description": "Cache TTL in seconds" }
+  },
+  "required": ["id", "resolverName"]
+}

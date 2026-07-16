@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/lov_select.schema.json",
+  "title": "LovSelect",
+  "description": "Select dropdown backed by a Lov resolver",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "label": { "type": "string" },
+    "resolverName": { "type": "string" },
+    "resolverParams": { "type": "object", "default": {} },
+    "valueField": { "type": "string", "default": "value" },
+    "labelField": { "type": "string", "default": "label" },
+    "placeholder": { "type": "string", "default": "Select..." },
+    "multiple": { "type": "boolean", "default": false },
+    "clearable": { "type": "boolean", "default": true },
+    "disabled": { "type": "boolean", "default": false },
+    "bindTo": { "type": "string", "description": "Model field this select is bound to" }
+  },
+  "required": ["id", "resolverName"]
+}

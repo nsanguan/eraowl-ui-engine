@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eraowl.dev/schemas/layout-v1.json",
+  "title": "EraOwl UI Layout Schema v1",
+  "type": "object",
+  "required": ["schemaVersion", "regions"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "styleRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+\\.[a-z0-9_-]+$",
+      "description": "Theme Style binding '{theme_id}.{style_key}' for page-level theme (§2.8)"
+    },
+    "regions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/region" }
+    }
+  },
+  "$defs": {
+    "region": {
+      "type": "object",
+      "required": ["id", "title", "components"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": ["id", "type", "position"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "enum": ["Region", "Lov", "LovSelect"] },
+        "position": {
+          "type": "object",
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "integer", "minimum": 0 },
+            "y": { "type": "integer", "minimum": 0 },
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "styleRef": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+\\.[a-z0-9_-]+$",
+          "description": "Override Theme Style for this component (§2.8)"
+        },
+        "templateOptions": {
+          "type": "object",
+          "description": "Declarative enum/bool options per component type (§2.8)",
+          "additionalProperties": { "type": ["string", "boolean", "number"] }
+        },
+        "styles": {
+          "type": "object",
+          "properties": {
+            "fontSize": { "type": "string", "pattern": "^[0-9]+(px|rem)$" },
+            "fontColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+          },
+          "additionalProperties": false
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of dependency components — triggers reactive re-fetch (§2.7)"
+        },
+        "dataSource": {
+          "type": "object",
+          "required": ["dataSourceRef", "dataSourceType"],
+          "properties": {
+            "dataSourceRef": { "type": "string" },
+            "dataSourceType": { "enum": ["REGISTERED_QUERY"] },
+            "params": { "type": "object" }
+          },
+          "additionalProperties": false
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean" },
+            "pattern": { "type": "string" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "minLength": { "type": "integer", "minimum": 0 },
+            "maxLength": { "type": "integer", "minimum": 0 },
+            "customResolver": { "type": "string", "description": "resolverKey via ResolverRegistry only" }
+          },
+          "additionalProperties": false
+        },
+        "formBinding": {
+          "type": "object",
+          "properties": {
+            "field": { "type": "string", "description": "Field name in submit payload (default = component id)" },
+            "subscribesToForm": { "type": "boolean", "description": "true = stored in useRenderStore.formValues" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
