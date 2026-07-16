@@ -4,6 +4,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  pointerWithin,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
@@ -15,6 +16,8 @@ import { CanvasArea } from "../designer/canvas/CanvasArea";
 import { PropertyInspector } from "../designer/inspector/PropertyInspector";
 import { useUIStore } from "../store/useUIStore";
 import { getComponentMeta } from "../designer/palette/componentRegistry";
+
+const FIELD_TYPES = ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput", "Lov", "LovSelect"];
 
 export function DesignerPage() {
   const addComponent = useUIStore((s) => s.addComponent);
@@ -57,16 +60,20 @@ export function DesignerPage() {
 
     const defaultProps = getComponentMeta(componentType)?.defaultProps ?? {};
 
+    // Canvas accepts Region
     if (containerType === "canvas" && componentType === "Region") {
       addComponent(componentType, defaultProps, undefined, null);
-    } else if (containerType === "region" && componentType === "GridRow") {
+    }
+    // Region accepts GridRow
+    else if (containerType === "region" && componentType === "GridRow") {
       addComponent(componentType, defaultProps, undefined, containerId);
-    } else if (containerType === "gridrow" && componentType === "GridColumn") {
+    }
+    // GridRow accepts GridColumn
+    else if (containerType === "gridrow" && componentType === "GridColumn") {
       addComponent(componentType, defaultProps, undefined, containerId);
-    } else if (
-      containerType === "gridcol" &&
-      ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput", "Lov", "LovSelect"].includes(componentType)
-    ) {
+    }
+    // GridColumn accepts field components
+    else if (containerType === "gridcol" && FIELD_TYPES.includes(componentType)) {
       addComponent(componentType, defaultProps, undefined, containerId);
     }
   };
@@ -74,6 +81,7 @@ export function DesignerPage() {
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
