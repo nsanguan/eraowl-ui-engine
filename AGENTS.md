@@ -192,6 +192,30 @@ DROP TABLE ...;
 
 ---
 
+## AI Orchestration (Phase 5)
+
+### AI Provider
+- OpenRouter API with `deepseek/deepseek-v4-flash` model
+- Base URL: `https://openrouter.ai/api/v1`
+- Config in `.env`: `OPENROUTER_API_KEY`, `AI_MODEL`
+
+### Endpoints
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/ai/generate-layout` | POST | NL → layout_json |
+| `/api/ai/suggest-codegen` | POST | layout → React code |
+
+### Orchestrator
+- `app/modules/ui_designer/ai/orchestrator.py` — `AIOrchestrator` class
+- Uses `httpx` for async HTTP to OpenRouter
+- Returns structured JSON responses
+
+### Prompt Templates
+- Layout generation: §9.1 in Implement-V1.0.md
+- Code suggestion: §9.2 in Implement-V1.0.md
+
+---
+
 ## Environment Variables
 
 See `.env.example` in `eraowl-ui-engine-api/` for all variables.
