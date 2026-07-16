@@ -46,3 +46,20 @@ def test_is_allowed(writer):
     assert writer.is_allowed("apps/web/src/components/generated/button.tsx")
     assert not writer.is_allowed("apps/api/main.py")
     assert not writer.is_allowed("db/migrations/001.sql")
+
+
+def test_write_path_traversal_rejected(writer):
+    """A `..` traversal path must never escape the project root."""
+    with pytest.raises(PermissionError):
+        writer.write(
+            "apps/web/src/pages/generated/../../../../etc/passwd",
+            "malicious",
+            dry_run=False,
+        )
+
+
+def test_is_allowed_rejects_traversal(writer):
+    """is_allowed rejects traversal and absolute paths."""
+    assert not writer.is_allowed("apps/web/src/pages/generated/../../../../etc/passwd")
+    assert not writer.is_allowed("/etc/passwd")
+    assert not writer.is_allowed("../outside.tsx")

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { temporal } from "zundo";
+import { apiClient } from "../api/client";
 
 export interface DesignComponent {
   id: string;
@@ -24,11 +25,10 @@ interface UIState {
   removeComponent: (id: string) => void;
   updateComponent: (id: string, updates: Partial<DesignComponent>) => void;
   moveComponent: (id: string, newParentId: string | null, index: number) => void;
+  reorderWithinParent: (id: string, newIndex: number) => void;
   getChildren: (parentId: string | null) => DesignComponent[];
   saveLayout: () => void;
 }
-
-let nextId = 1;
 
 export const useUIStore = create<UIState>()(
   temporal(
@@ -45,7 +45,7 @@ export const useUIStore = create<UIState>()(
       toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
 
       addComponent: (type, defaultProps, name, parentId = null) => {
-        const id = `comp_${Date.now()}_${nextId++}`;
+        const id = `comp_${crypto.randomUUID()}`;
         set((s) => ({
           components: [
             ...s.components,
@@ -95,17 +95,50 @@ export const useUIStore = create<UIState>()(
           const component = s.components.find((c) => c.id === id);
           if (!component) return s;
 
-          const siblings = s.components.filter(
-            (c) => c.parentId === newParentId && c.id !== id,
-          );
-          siblings.splice(index, 0, { ...component, parentId: newParentId });
+          // Prevent moving a component into one of its own descendants
+          const descendantIds = new Set<string>();
+          const collect = (parentId: string) => {
+            for (const c of s.components) {
+              if (c.parentId === parentId) {
+                descendantIds.add(c.id);
+                collect(c.id);
+              }
+            }
+          };
+          collect(id);
+          if (newParentId !== null && descendantIds.has(newParentId)) return s;
 
-          const otherComponents = s.components.filter(
-            (c) => c.parentId !== newParentId && c.id !== id,
-          );
+          const without = s.components.filter((c) => c.id !== id);
+          const updated: DesignComponent = { ...component, parentId: newParentId };
+
+          const siblings = without.filter((c) => c.parentId === newParentId);
+          const others = without.filter((c) => c.parentId !== newParentId);
+
+          const clampedIndex = Math.max(0, Math.min(index, siblings.length));
+          siblings.splice(clampedIndex, 0, updated);
 
           return {
-            components: [...otherComponents, ...siblings],
+            components: [...others, ...siblings],
+          };
+        }),
+
+      reorderWithinParent: (id, newIndex) =>
+        set((s) => {
+          const component = s.components.find((c) => c.id === id);
+          if (!component) return s;
+
+          const siblings = s.components.filter(
+            (c) => c.parentId === component.parentId && c.id !== id,
+          );
+          const others = s.components.filter(
+            (c) => c.parentId !== component.parentId && c.id !== id,
+          );
+
+          const clampedIndex = Math.max(0, Math.min(newIndex, siblings.length));
+          siblings.splice(clampedIndex, 0, component);
+
+          return {
+            components: [...others, ...siblings],
           };
         }),
 
@@ -120,7 +153,37 @@ export const useUIStore = create<UIState>()(
           pageTitle,
           components,
         };
+        // Persist to localStorage as local backup
         localStorage.setItem("eraowl-layout", JSON.stringify(layout));
+
+        // Persist to backend API
+        const pageId = localStorage.getItem("eraowl-current-page-id");
+        if (pageId) {
+          apiClient
+            .post("/v1/layouts", {
+              page_id: pageId,
+              layout_json: {
+                schemaVersion: "1.0.0",
+                regions: components
+                  .filter((c) => c.parentId === null)
+                  .map((c) => ({
+                    id: c.id,
+                    title: c.name,
+                    components: components
+                      .filter((child) => child.parentId === c.id)
+                      .map((child) => ({
+                        id: child.id,
+                        type: child.type,
+                        position: child.props.position ?? { x: 0, y: 0, width: 200, height: 40 },
+                        ...child.props,
+                      })),
+                  })),
+              },
+            })
+            .catch((err: unknown) => {
+              console.error("Failed to save layout to API:", err);
+            });
+        }
       },
     }),
     { limit: 50 },

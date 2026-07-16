@@ -2,7 +2,9 @@ import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useUIStore } from "../../store/useUIStore";
 import type { DesignComponent } from "../../store/useUIStore";
 import { DroppableGridRow } from "./DroppableGridRow";
@@ -19,7 +21,22 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
   const setSelectedComponent = useUIStore((s) => s.setSelectedComponent);
   const removeComponent = useUIStore((s) => s.removeComponent);
 
-  const { setNodeRef, isOver } = useDroppable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: component.id,
+    data: {
+      type: "sortable-item",
+      componentType: "Region",
+    },
+  });
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `region-${component.id}`,
     data: {
       containerType: "region",
@@ -29,6 +46,12 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
 
   const gridRows = components.filter((c) => c.parentId === component.id);
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedComponent(component.id);
@@ -36,7 +59,13 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setSortableRef(node);
+        setDroppableRef(node);
+      }}
+      style={style}
+      {...attributes}
+      {...listeners}
       className={`canvas-region ${selectedComponentId === component.id ? "canvas-region--selected" : ""} ${isOver ? "canvas-region--dragover" : ""}`}
       onClick={handleClick}
     >

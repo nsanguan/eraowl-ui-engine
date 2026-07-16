@@ -1,106 +1,200 @@
+"""AI Orchestrator — §9 AI Agent Rules.
+
+Uses OpenRouter API with configurable model. Supports:
+- Retry with exponential backoff
+- Fallback provider when primary fails
+- JSON extraction from markdown-wrapped responses
+- Reusable httpx.AsyncClient
+"""
+
 from __future__ import annotations
 
 import json
-from typing import Any
+import logging
+import re
+from typing import Any, cast
 
 import httpx
 
 from app.core.config import settings
+from app.schema_validation.validator import COMPONENT_TYPES
+from app.shared.exceptions import AIOrchestrationError
+
+logger = logging.getLogger(__name__)
+
+# Regex to extract JSON from markdown code fences: ```json ... ``` or ``` ... ```
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*\n?(.*?)\n?\s*```", re.DOTALL)
+
+
+def _extract_json(content: str) -> dict[str, Any]:
+    """Extract JSON from AI response, handling markdown-wrapped output."""
+    content = content.strip()
+
+    # Try direct parse first
+    try:
+        return cast(dict[str, Any], json.loads(content))
+    except json.JSONDecodeError:
+        pass
+
+    # Try extracting from markdown code fences
+    match = _JSON_FENCE_RE.search(content)
+    if match:
+        try:
+            return cast(dict[str, Any], json.loads(match.group(1).strip()))
+        except json.JSONDecodeError:
+            pass
+
+    raise AIOrchestrationError(detail=f"Failed to parse AI response as JSON: {content[:200]}")
 
 
 class AIOrchestrator:
-    def __init__(self):
+    """Orchestrates AI calls with retry and fallback support."""
+
+    def __init__(self) -> None:
         self.provider = settings.AI_PROVIDER
         self.api_key = settings.AI_API_KEY
         self.model = settings.AI_MODEL
         self.base_url = settings.AI_BASE_URL
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=settings.AI_TIMEOUT)
+        return self._client
+
+    async def _call_provider(
+        self,
+        *,
+        base_url: str,
+        api_key: str,
+        model: str,
+        messages: list[dict[str, str]],
+        max_tokens: int,
+        temperature: float,
+    ) -> str:
+        """Make a single call to an AI provider. Returns raw content string."""
+        client = await self._get_client()
+        try:
+            response = await client.post(
+                f"{base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                },
+            )
+        except httpx.HTTPError as exc:
+            raise AIOrchestrationError(detail=f"HTTP error calling AI provider: {exc}") from exc
+
+        if response.status_code != 200:
+            raise AIOrchestrationError(
+                detail=f"AI API returned {response.status_code}: {response.text[:300]}"
+            )
+
+        data = response.json()
+        try:
+            return cast(str, data["choices"][0]["message"]["content"])
+        except (KeyError, IndexError) as exc:
+            raise AIOrchestrationError(detail=f"Unexpected AI response structure: {data}") from exc
+
+    async def _call_with_fallback(
+        self,
+        messages: list[dict[str, str]],
+        max_tokens: int = 2048,
+        temperature: float = 0.3,
+    ) -> str:
+        """Try primary provider, then fallback if configured and primary fails."""
+        try:
+            return await self._call_provider(
+                base_url=self.base_url,
+                api_key=self.api_key,
+                model=self.model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        except AIOrchestrationError:
+            if not settings.AI_FALLBACK_PROVIDER or not settings.AI_FALLBACK_API_KEY:
+                raise
+
+            logger.warning("Primary AI provider failed, trying fallback provider: %s", settings.AI_FALLBACK_PROVIDER)
+
+            fallback_model = settings.AI_FALLBACK_MODEL or self.model
+            return await self._call_provider(
+                base_url=settings.AI_BASE_URL,  # Same base URL (OpenRouter)
+                api_key=settings.AI_FALLBACK_API_KEY,
+                model=fallback_model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
 
     async def generate_layout(self, prompt: str) -> dict[str, Any]:
-        system_prompt = """You are an AI assistant that generates layout_json for the EraOwl UI Engine.
-        
+        """Generate layout_json from a natural-language prompt."""
+        allowed_types = ", ".join(COMPONENT_TYPES)
+        system_prompt = f"""You are an AI assistant that generates layout_json for the EraOwl UI Engine.
+
 Return ONLY valid JSON matching this schema:
-{
+{{
   "schemaVersion": "1.0.0",
   "regions": [
-    {
+    {{
       "id": "string",
       "title": "string",
       "components": [
-        {
+        {{
           "id": "string",
           "type": "Region" | "Lov" | "LovSelect",
-          "position": {"x": 0, "y": 0, "width": 200, "height": 40}
-        }
+          "position": {{"x": 0, "y": 0, "width": 200, "height": 40}}
+        }}
       ]
-    }
+    }}
   ]
-}
+}}
 
-Available component types: Region, Lov, LovSelect.
+Available component types (the "type" field MUST be EXACTLY one of these, case-sensitive): {allowed_types}.
 Do not include any explanation, just the JSON."""
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "max_tokens": 2048,
-                    "temperature": 0.3,
-                },
-                timeout=settings.AI_TIMEOUT,
-            )
-            
-            if response.status_code != 200:
-                raise Exception(f"AI API error: {response.status_code}")
-            
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            
-            return json.loads(content)
+        content = await self._call_with_fallback(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=2048,
+            temperature=0.3,
+        )
+        return _extract_json(content)
 
-    async def suggest_codegen(self, layout: dict, target_project: str) -> dict[str, Any]:
-        system_prompt = f"""You are an AI assistant that suggests React component code for the EraOwl UI Engine codegen pipeline.
+    async def suggest_codegen(self, layout: dict[str, Any], target_project: str) -> dict[str, Any]:
+        """Suggest React component code from a layout_json."""
+        system_prompt = (
+            f"You are an AI assistant that suggests React component code for the "
+            f"EraOwl UI Engine codegen pipeline.\n\n"
+            f"Target project: {target_project}\n"
+            f"Generate TypeScript React component code for each component in the layout.\n\n"
+            f"Return a JSON object mapping filenames to file contents.\n"
+            f"Do not include any explanation, just the JSON."
+        )
 
-Target project: {target_project}
-Generate TypeScript React component code for each component in the layout.
+        content = await self._call_with_fallback(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Layout JSON:\n{json.dumps(layout, indent=2)}"},
+            ],
+            max_tokens=settings.AI_MAX_TOKENS,
+            temperature=0.3,
+        )
+        return _extract_json(content)
 
-Return a JSON object mapping filenames to file contents.
-Do not include any explanation, just the JSON."""
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Layout JSON:\n{json.dumps(layout, indent=2)}"},
-                    ],
-                    "max_tokens": 4096,
-                    "temperature": 0.3,
-                },
-                timeout=settings.AI_TIMEOUT,
-            )
-            
-            if response.status_code != 200:
-                raise Exception(f"AI API error: {response.status_code}")
-            
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            
-            return json.loads(content)
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
 
 
 ai_orchestrator = AIOrchestrator()

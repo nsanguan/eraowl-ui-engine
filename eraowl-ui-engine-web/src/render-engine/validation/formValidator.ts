@@ -17,7 +17,7 @@ export function formValidator(
       const value = formValues[comp.id]
       const fieldErrors: string[] = []
 
-      if (comp.validation.required && (value === undefined || value === '')) {
+      if (comp.validation.required && (value === undefined || value === '' || (Array.isArray(value) && value.length === 0))) {
         fieldErrors.push('This field is required')
       }
 
@@ -29,10 +29,29 @@ export function formValidator(
         fieldErrors.push(`Maximum length is ${comp.validation.maxLength}`)
       }
 
+      if (comp.validation.min !== undefined && typeof value === 'number' && value < comp.validation.min) {
+        fieldErrors.push(`Minimum value is ${comp.validation.min}`)
+      }
+
+      if (comp.validation.max !== undefined && typeof value === 'number' && value > comp.validation.max) {
+        fieldErrors.push(`Maximum value is ${comp.validation.max}`)
+      }
+
       if (comp.validation.pattern && typeof value === 'string') {
-        const regex = new RegExp(comp.validation.pattern)
-        if (!regex.test(value)) {
+        const pattern = comp.validation.pattern
+        // Cap pattern length to limit ReDoS surface; reject oversized patterns.
+        if (pattern.length > 200) {
           fieldErrors.push('Invalid format')
+        } else {
+          try {
+            const regex = new RegExp(pattern)
+            if (!regex.test(value)) {
+              fieldErrors.push('Invalid format')
+            }
+          } catch {
+            // Invalid/unsafe pattern → treat as no-match rather than throwing.
+            fieldErrors.push('Invalid format')
+          }
         }
       }
 

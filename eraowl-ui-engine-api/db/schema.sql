@@ -1,4 +1,7 @@
-\restrict dzXyEvDjwcUefQynN8jE7zaA4eGI9S6sMbd75Zq0OvYfklhtz6qdRyjGgKsZueK
+-- NOTE: This file is a historical pg_dump artifact and is NOT the source of truth.
+-- The source of truth for schema is db/migrations/ (dbmate). Do not edit by hand.
+-- A previous \restrict token line was removed from this dump (it is a row-security
+-- token that must never be committed).
 
 -- Dumped from database version 18.4 (Ubuntu 18.4-1.pgdg24.04+1)
 -- Dumped by pg_dump version 18.4 (Ubuntu 18.4-1.pgdg24.04+1)
@@ -435,8 +438,8 @@ ALTER TABLE ONLY public.theme_styles
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dzXyEvDjwcUefQynN8jE7zaA4eGI9S6sMbd75Zq0OvYfklhtz6qdRyjGgKsZueK
-
+-- NOTE: A previous \unrestrict token line was removed from this dump (must never
+-- be committed). See header note: db/migrations/ is the source of truth.
 
 --
 -- Dbmate schema migrations

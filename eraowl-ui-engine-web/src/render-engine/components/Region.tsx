@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 interface RegionProps {
-  id: string;
-  type: "region";
+  id?: string;
+  type?: "region" | "Region";
   label?: string;
   children?: ReactNode;
   templateOptions?: Record<string, string | boolean>;

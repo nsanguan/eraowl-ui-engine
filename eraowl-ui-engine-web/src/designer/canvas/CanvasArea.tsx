@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useUIStore } from "../../store/useUIStore";
 import { DroppableRegion } from "./DroppableRegion";
 
@@ -38,13 +39,18 @@ export function CanvasArea() {
               </div>
             </div>
           ) : (
-            regions.map((comp) => (
-              <DroppableRegion key={comp.id} component={comp}>
-                {selectedComponentId === comp.id && (
-                  <div className="canvas-component--selected-overlay" />
-                )}
-              </DroppableRegion>
-            ))
+            <SortableContext
+              items={regions.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {regions.map((comp) => (
+                <DroppableRegion key={comp.id} component={comp}>
+                  {selectedComponentId === comp.id && (
+                    <div className="canvas-component--selected-overlay" />
+                  )}
+                </DroppableRegion>
+              ))}
+            </SortableContext>
           )}
         </div>
       </CanvasDropZone>

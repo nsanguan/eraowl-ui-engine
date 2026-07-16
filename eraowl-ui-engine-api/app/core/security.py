@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -17,7 +17,7 @@ from app.core.config import settings
 _bearer = HTTPBearer(auto_error=False)
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT access token.
 
     Raises JWTError on invalid/expired token.
@@ -31,7 +31,7 @@ def decode_token(token: str) -> dict:
 
 async def get_current_user(
     cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-) -> dict:
+) -> dict[str, Any]:
     if cred is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,7 +47,21 @@ async def get_current_user(
     return payload
 
 
-def require_role(*allowed_roles: str):
+ADMIN_ROLE = "ui_designer.admin"
+
+
+def user_id(user: dict[str, Any]) -> str | None:
+    """Return the subject (user id) from a decoded JWT payload."""
+    sub = user.get("sub")
+    return str(sub) if sub is not None else None
+
+
+def is_admin(user: dict[str, Any]) -> bool:
+    """Return True if the user carries the admin role (bypasses owner scoping)."""
+    return ADMIN_ROLE in user.get("roles", [])
+
+
+def require_role(*allowed_roles: str) -> Any:
     """Return a dependency that enforces RBAC.
 
     Usage:
@@ -55,8 +69,8 @@ def require_role(*allowed_roles: str):
     """
 
     async def _check(
-        user: Annotated[dict, Depends(get_current_user)],
-    ) -> dict:
+        user: Annotated[dict[str, Any], Depends(get_current_user)],
+    ) -> dict[str, Any]:
         user_roles: list[str] = user.get("roles", [])
         if not any(r in allowed_roles for r in user_roles):
             raise HTTPException(

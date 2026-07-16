@@ -1,8 +1,8 @@
 import { useCascadeQuery } from "../hooks/useCascadeQuery";
 
 interface LovProps {
-  id: string;
-  type: "lov";
+  id?: string;
+  type?: "lov" | "Lov";
   label?: string;
   lovSource?: string;
   dependsOn?: string[];

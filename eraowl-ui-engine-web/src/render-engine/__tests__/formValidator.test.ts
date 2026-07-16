@@ -70,6 +70,50 @@ describe('formValidator', () => {
     expect(result.valid).toBe(true)
   })
 
+  it('returns error for min violation (number)', () => {
+    const layout = makeLayout([
+      { id: 'age', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { min: 18 } },
+    ])
+    const result = formValidator(layout, { age: 10 })
+    expect(result.valid).toBe(false)
+    expect(result.errors.age).toContain('Minimum value is 18')
+  })
+
+  it('returns valid for min satisfied (number)', () => {
+    const layout = makeLayout([
+      { id: 'age', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { min: 18 } },
+    ])
+    const result = formValidator(layout, { age: 21 })
+    expect(result.valid).toBe(true)
+  })
+
+  it('returns error for max violation (number)', () => {
+    const layout = makeLayout([
+      { id: 'age', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { max: 65 } },
+    ])
+    const result = formValidator(layout, { age: 70 })
+    expect(result.valid).toBe(false)
+    expect(result.errors.age).toContain('Maximum value is 65')
+  })
+
+  it('treats an invalid regex pattern as no-match (no throw)', () => {
+    const layout = makeLayout([
+      { id: 'code', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { pattern: '([' } },
+    ])
+    const result = formValidator(layout, { code: 'abc' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.code).toContain('Invalid format')
+  })
+
+  it('treats an oversized regex pattern as no-match', () => {
+    const layout = makeLayout([
+      { id: 'code', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { pattern: 'a'.repeat(201) } },
+    ])
+    const result = formValidator(layout, { code: 'abc' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.code).toContain('Invalid format')
+  })
+
   it('reports errors for multiple fields', () => {
     const layout = makeLayout([
       { id: 'field1', type: 'Region' as Component['type'], position: { x: 0, y: 0, width: 100, height: 40 }, validation: { required: true } },

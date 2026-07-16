@@ -1,5 +1,6 @@
 export { UIRenderer } from './UIRenderer'
-export { RuntimeFormProvider } from './RuntimeFormProvider'
+export { RuntimeFormProvider, RuntimeFormContext } from './RuntimeFormProvider'
+export { useRuntimeForm } from './useRuntimeForm'
 export { RuntimeThemeProvider } from './theme/RuntimeThemeProvider'
 export { useFormState } from './hooks/useFormState'
 export { useCascadeQuery } from './hooks/useCascadeQuery'

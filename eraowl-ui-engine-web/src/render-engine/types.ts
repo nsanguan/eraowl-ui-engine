@@ -36,9 +36,22 @@ export interface FormBinding {
   subscribesToForm?: boolean;
 }
 
+export type ComponentType =
+  | "region" | "Region"
+  | "gridRow" | "GridRow"
+  | "gridColumn" | "GridColumn"
+  | "inputText" | "InputText"
+  | "lov" | "Lov"
+  | "lov_select" | "LovSelect"
+  | "table" | "Table"
+  | "card" | "Card"
+  | "button" | "Button"
+  | "iconButton" | "IconButton"
+  | "link" | "Link";
+
 export interface Component {
   id: string;
-  type: "Region" | "Lov" | "LovSelect";
+  type: ComponentType;
   position: Position;
   styleRef?: string;
   templateOptions?: Record<string, string | boolean | number>;
@@ -47,6 +60,7 @@ export interface Component {
   dataSource?: DataSource;
   validation?: Validation;
   formBinding?: FormBinding;
+  components?: Component[];
 }
 
 export interface Region {

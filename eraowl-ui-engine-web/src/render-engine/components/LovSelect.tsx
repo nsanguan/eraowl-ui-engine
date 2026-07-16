@@ -2,8 +2,8 @@ import { useCascadeQuery } from "../hooks/useCascadeQuery";
 import { useFormState } from "../hooks/useFormState";
 
 interface LovSelectProps {
-  id: string;
-  type: "lov_select";
+  id?: string;
+  type?: "lov_select" | "LovSelect";
   label?: string;
   name?: string;
   lovSource?: string;
@@ -22,10 +22,11 @@ export function LovSelect({
 }: LovSelectProps) {
   const { data, isLoading } = useCascadeQuery(lovSource ?? "", dependsOn ?? []);
   const { formValues, setFieldValue } = useFormState();
-  const currentValue = String(formValues[name ?? id] ?? "");
+  const fieldName = name ?? id ?? "lovselect";
+  const currentValue = String(formValues[fieldName] ?? "");
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFieldValue(name ?? id, e.target.value);
+    setFieldValue(fieldName, e.target.value);
   };
 
   const size = templateOptions?.size ?? "medium";

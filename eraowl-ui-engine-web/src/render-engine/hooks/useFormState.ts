@@ -1,30 +1,21 @@
 import { useRenderStore } from "../../store/useRenderStore";
 
+/**
+ * Hook for form state management in the render engine.
+ *
+ * Returns reactive state selectors and stable action references
+ * directly from the Zustand store (no new closures per render).
+ */
 export function useFormState() {
   const formValues = useRenderStore((s) => s.formValues);
   const touched = useRenderStore((s) => s.touched);
   const errors = useRenderStore((s) => s.errors);
   const submitState = useRenderStore((s) => s.submitState);
 
-  const setFieldValue = (name: string, value: unknown) => {
-    useRenderStore.getState().setFieldValue(name, value);
-  };
-
-  const setFieldTouched = (name: string, isTouched = true) => {
-    useRenderStore.getState().setFieldTouched(name, isTouched);
-  };
-
-  const setErrors = (errors: Record<string, string>) => {
-    useRenderStore.getState().setErrors(errors);
-  };
-
-  const setSubmitState = (state: 'idle' | 'validating' | 'ready' | 'submitting' | 'error') => {
-    useRenderStore.getState().setSubmitState(state);
-  };
-
-  const reset = () => {
-    useRenderStore.getState().reset();
-  };
+  // Return stable action references directly from the store —
+  // Zustand guarantees these are referentially stable across renders.
+  const { setFieldValue, setFieldTouched, setErrors, setSubmitState, reset } =
+    useRenderStore.getState();
 
   return {
     formValues,

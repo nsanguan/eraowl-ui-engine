@@ -6,10 +6,10 @@ AI Agent must NOT add resolvers without going through this whitelist.
 
 from __future__ import annotations
 
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable
 
-# Type alias: resolver takes params dict, returns list of dicts
-QueryResolver = Callable[[dict], Awaitable[list[dict]]]
+# Type alias: resolver takes params dict[str, Any], returns list of dicts
+QueryResolver = Callable[[dict[str, Any]], Awaitable[list[dict[str, Any]]]]
 
 
 class ResolverRegistry:
@@ -29,7 +29,7 @@ class ResolverRegistry:
         cls._resolvers[key] = fn
 
     @classmethod
-    async def resolve(cls, key: str, params: dict) -> list[dict]:
+    async def resolve(cls, key: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Execute a registered resolver. Raises KeyError if not found."""
         if key not in cls._resolvers:
             raise KeyError(f"Unregistered resolver: {key}")

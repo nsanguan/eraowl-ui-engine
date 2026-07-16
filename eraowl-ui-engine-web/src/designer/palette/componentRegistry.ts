@@ -169,3 +169,25 @@ export function getComponentsByCategory(): Record<string, ComponentMeta[]> {
   }
   return categories;
 }
+
+// ─── Drop Rules (single source of truth) ──────────────────────────
+// Every component type that can be placed on the canvas.
+export const ALLOWED_DROP_TYPES: string[] = componentRegistry.map((c) => c.type);
+
+// Maps a container type to the set of component types it accepts.
+const CONTAINER_ACCEPTS: Record<string, string[]> = {
+  canvas: ["Region"],
+  region: ["GridRow"],
+  gridrow: ["GridColumn"],
+  gridcol: ALLOWED_DROP_TYPES.filter(
+    (t) => !["Region", "GridRow", "GridColumn"].includes(t),
+  ),
+};
+
+export function canDropInto(
+  containerType: string,
+  componentType: string,
+): boolean {
+  const accepted = CONTAINER_ACCEPTS[containerType];
+  return !!accepted && accepted.includes(componentType);
+}

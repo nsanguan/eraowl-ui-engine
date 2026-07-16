@@ -3,8 +3,8 @@
 §6.1 — All resolvers must be registered here before use.
 """
 
-from app.modules.ui_designer.resolvers.registry import ResolverRegistry
 from app.modules.ui_designer.resolvers.builtin import province_by_country
+from app.modules.ui_designer.resolvers.registry import ResolverRegistry
 
 
 def register_builtin_resolvers() -> None:

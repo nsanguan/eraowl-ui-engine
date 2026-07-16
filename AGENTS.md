@@ -108,7 +108,7 @@ npm run typecheck    # Type checking
 ```bash
 cd eraowl-ui-engine-api
 # Use sync driver for dbmate (not asyncpg)
-DATABASE_URL="postgres://eraowlui_admin:EraOwl2026@202.71.1.13:5435/eraowlui?sslmode=disable" /tmp/dbmate up
+DATABASE_URL="postgres://eraowlui_admin:<DB_PASSWORD>@202.71.1.13:5435/eraowlui?sslmode=disable" /tmp/dbmate up
 ```
 
 Migration file format:

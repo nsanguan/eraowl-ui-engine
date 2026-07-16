@@ -1,5 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRenderStore } from '../../store/useRenderStore'
+import { apiClient } from '../../api/client'
+
+interface LovItem {
+  label: string
+  value: string
+}
+
+interface ResolverResponse {
+  data: LovItem[]
+}
 
 export function useCascadeQuery(sourceId: string, dependsOn: string[]) {
   const formValues = useRenderStore((s) => s.formValues)
@@ -19,7 +29,16 @@ export function useCascadeQuery(sourceId: string, dependsOn: string[]) {
   return useQuery({
     queryKey: ['lov', sourceId, params],
     queryFn: async () => {
-      return { items: [] as Array<{ label: string; value: string }> }
+      const response = await apiClient.post<ResolverResponse>(
+        '/v1/resolvers/resolve',
+        {
+          resolver_name: sourceId,
+          params,
+        }
+      )
+      return {
+        items: (response.data ?? []) as LovItem[],
+      }
     },
     enabled: !!sourceId && allResolved,
     staleTime: 60_000,

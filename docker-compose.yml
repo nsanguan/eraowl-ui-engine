@@ -55,7 +55,7 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5173', r => { process.exit(r.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:80', r => { process.exit(r.statusCode === 200 ? 0 : 1) })"]
       interval: 15s
       timeout: 5s
       retries: 5

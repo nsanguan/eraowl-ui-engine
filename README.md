@@ -100,7 +100,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Run migrations (requires external PostgreSQL)
-DATABASE_URL="postgres://eraowlui_admin:EraOwl2026@202.71.1.13:5435/eraowlui?sslmode=disable" /tmp/dbmate up
+DATABASE_URL="postgres://eraowlui_admin:<DB_PASSWORD>@202.71.1.13:5435/eraowlui?sslmode=disable" /tmp/dbmate up
 
 # Start server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

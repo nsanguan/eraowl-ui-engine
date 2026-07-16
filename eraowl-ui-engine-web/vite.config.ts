@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 const MODE = process.env.BUILD_MODE ?? "designer";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [react(), tailwindcss()],
   build:
     MODE === "designer"

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Generic, TypeVar
+from datetime import UTC, datetime
+from typing import Generic, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -36,7 +36,7 @@ class BaseCRUDService(Generic[ModelT]):
     async def soft_delete(self, db: AsyncSession, record_id: str) -> None:
         obj = await self.get_or_404(db, record_id)
         if hasattr(obj, "deleted_at"):
-            obj.deleted_at = datetime.utcnow()  # type: ignore[attr-defined]
+            obj.deleted_at = datetime.now(UTC)
             await db.flush()
         else:
             await db.delete(obj)

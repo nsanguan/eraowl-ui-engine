@@ -6,13 +6,13 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
-from app.core.security import get_current_user, require_role
+from app.core.security import get_current_user, is_admin, require_role, user_id
 from app.modules.ui_designer.schemas import (
     LayoutCreate,
     LayoutRead,
@@ -22,6 +22,7 @@ from app.modules.ui_designer.schemas import (
     PageUpdate,
 )
 from app.modules.ui_designer.service import LayoutService, PageService
+from app.schema_validation.validator import validate_layout
 
 router = APIRouter()
 
@@ -34,10 +35,14 @@ _layout_svc = LayoutService()
 @router.get("/pages", response_model=PageList)
 async def list_pages(
     db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    limit: int = Query(50, ge=1, le=200, description="Pagination limit"),
 ) -> PageList:
-    items = await _page_svc.list_all(db)
-    return PageList(items=[PageRead.model_validate(i) for i in items], total=len(items))
+    items, total = await _page_svc.list_paginated(
+        db, offset=offset, limit=limit, owner_id=user_id(user), is_admin=is_admin(user)
+    )
+    return PageList(items=[PageRead.model_validate(i) for i in items], total=total)
 
 
 @router.post(
@@ -49,8 +54,9 @@ async def list_pages(
 async def create_page(
     payload: PageCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> PageRead:
-    page = await _page_svc.create(db, payload)
+    page = await _page_svc.create(db, payload, owner_id=user_id(user))
     return PageRead.model_validate(page)
 
 
@@ -58,9 +64,11 @@ async def create_page(
 async def get_page(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> PageRead:
-    page = await _page_svc.get_or_404(db, page_id)
+    page = await _page_svc.get_scoped(db, page_id, owner_id=user_id(user), is_admin=is_admin(user))
+    if page is None:
+        raise HTTPException(status_code=404)
     return PageRead.model_validate(page)
 
 
@@ -73,8 +81,9 @@ async def update_page(
     page_id: str,
     payload: PageUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> PageRead:
-    page = await _page_svc.update(db, page_id, payload)
+    page = await _page_svc.update(db, page_id, payload, owner_id=user_id(user), is_admin=is_admin(user))
     if page is None:
         raise HTTPException(status_code=404)
     return PageRead.model_validate(page)
@@ -88,8 +97,9 @@ async def update_page(
 async def delete_page(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> None:
-    await _page_svc.soft_delete(db, page_id)
+    await _page_svc.soft_delete_scoped(db, page_id, owner_id=user_id(user), is_admin=is_admin(user))
 
 
 # ── Layouts ──────────────────────────────────────────────────────────────────
@@ -103,8 +113,11 @@ async def delete_page(
 async def create_layout(
     payload: LayoutCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> LayoutRead:
-    layout = await _layout_svc.create(db, payload)
+    # §6 Security Contract: validate layout_json against JSON Schema before persisting
+    validate_layout(payload.layout_json)
+    layout = await _layout_svc.create(db, payload, created_by=user.get("sub"))
     return LayoutRead.model_validate(layout)
 
 
@@ -112,7 +125,7 @@ async def create_layout(
 async def get_latest_layout(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[dict, Depends(get_current_user)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> LayoutRead:
     layout = await _layout_svc.get_latest(db, page_id)
     if layout is None:
