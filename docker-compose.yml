@@ -4,7 +4,7 @@ services:
     container_name: eraowl-redis
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -23,12 +23,12 @@ services:
     container_name: eraowl-api
     restart: unless-stopped
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-8010}:8000"
     env_file:
       - ./eraowl-ui-engine-api/.env
     environment:
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: '["http://localhost:${WEB_PORT:-5173}"]'
+      CORS_ORIGINS: '["http://localhost:${WEB_PORT:-5180}"]'
     depends_on:
       redis:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
     container_name: eraowl-web
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-5173}:5173"
+      - "${WEB_PORT:-5180}:5173"
     environment:
       VITE_API_BASE_URL: http://localhost:${API_PORT:-8000}
     depends_on:
