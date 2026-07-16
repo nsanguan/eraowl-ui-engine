@@ -5,6 +5,7 @@ export interface DesignComponent {
   id: string;
   type: string;
   name: string;
+  parentId: string | null;
   props: Record<string, unknown>;
 }
 
@@ -19,9 +20,11 @@ interface UIState {
   setSelectedComponent: (id: string | null) => void;
   setCanvasZoom: (zoom: number) => void;
   toggleGrid: () => void;
-  addComponent: (type: string, defaultProps: Record<string, unknown>, name?: string) => void;
+  addComponent: (type: string, defaultProps: Record<string, unknown>, name?: string, parentId?: string | null) => void;
   removeComponent: (id: string) => void;
   updateComponent: (id: string, updates: Partial<DesignComponent>) => void;
+  moveComponent: (id: string, newParentId: string | null, index: number) => void;
+  getChildren: (parentId: string | null) => DesignComponent[];
   saveLayout: () => void;
 }
 
@@ -41,7 +44,7 @@ export const useUIStore = create<UIState>()(
       setCanvasZoom: (zoom) => set({ canvasZoom: zoom }),
       toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
 
-      addComponent: (type, defaultProps, name) => {
+      addComponent: (type, defaultProps, name, parentId = null) => {
         const id = `comp_${Date.now()}_${nextId++}`;
         set((s) => ({
           components: [
@@ -50,6 +53,7 @@ export const useUIStore = create<UIState>()(
               id,
               type,
               name: name ?? `${type}_${s.components.length + 1}`,
+              parentId,
               props: { ...defaultProps },
             },
           ],
@@ -58,11 +62,26 @@ export const useUIStore = create<UIState>()(
       },
 
       removeComponent: (id) =>
-        set((s) => ({
-          components: s.components.filter((c) => c.id !== id),
-          selectedComponentId:
-            s.selectedComponentId === id ? null : s.selectedComponentId,
-        })),
+        set((s) => {
+          const component = s.components.find((c) => c.id === id);
+          if (!component) return s;
+
+          const removeDescendants = (parentId: string): string[] => {
+            const children = s.components.filter((c) => c.parentId === parentId);
+            const ids = children.map((c) => c.id);
+            for (const child of children) {
+              ids.push(...removeDescendants(child.id));
+            }
+            return ids;
+          };
+
+          const idsToRemove = [id, ...removeDescendants(id)];
+          return {
+            components: s.components.filter((c) => !idsToRemove.includes(c.id)),
+            selectedComponentId:
+              s.selectedComponentId === id ? null : s.selectedComponentId,
+          };
+        }),
 
       updateComponent: (id, updates) =>
         set((s) => ({
@@ -70,6 +89,29 @@ export const useUIStore = create<UIState>()(
             c.id === id ? { ...c, ...updates } : c,
           ),
         })),
+
+      moveComponent: (id, newParentId, index) =>
+        set((s) => {
+          const component = s.components.find((c) => c.id === id);
+          if (!component) return s;
+
+          const siblings = s.components.filter(
+            (c) => c.parentId === newParentId && c.id !== id,
+          );
+          siblings.splice(index, 0, { ...component, parentId: newParentId });
+
+          const otherComponents = s.components.filter(
+            (c) => c.parentId !== newParentId && c.id !== id,
+          );
+
+          return {
+            components: [...otherComponents, ...siblings],
+          };
+        }),
+
+      getChildren: (parentId) => {
+        return get().components.filter((c) => c.parentId === parentId);
+      },
 
       saveLayout: () => {
         const { components, pageTitle } = get();

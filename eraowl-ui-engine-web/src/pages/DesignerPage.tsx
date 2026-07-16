@@ -1,7 +1,7 @@
 import "../designer/designer.css";
 import { DesignerToolbar } from "../designer/toolbar/DesignerToolbar";
 import { ComponentPalette } from "../designer/palette/ComponentPalette";
-import { DesignerCanvas } from "../designer/canvas/DesignerCanvas";
+import { HierarchicalCanvas } from "../designer/canvas/HierarchicalCanvas";
 import { PropertyInspector } from "../designer/inspector/PropertyInspector";
 
 export function DesignerPage() {
@@ -10,7 +10,7 @@ export function DesignerPage() {
       <DesignerToolbar />
       <div className="designer-panels">
         <ComponentPalette />
-        <DesignerCanvas />
+        <HierarchicalCanvas />
         <PropertyInspector />
       </div>
     </div>

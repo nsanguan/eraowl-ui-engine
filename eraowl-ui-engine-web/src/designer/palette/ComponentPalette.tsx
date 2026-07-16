@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { getComponentsByCategory } from "./componentRegistry";
+import { useDraggable } from "@dnd-kit/core";
+import { getComponentsByCategory, type ComponentMeta } from "./componentRegistry";
 
 const categoryLabels: Record<string, string> = {
   layout: "Layout",
@@ -7,6 +8,38 @@ const categoryLabels: Record<string, string> = {
   data: "Data",
   action: "Action",
 };
+
+function DraggablePaletteItem({ meta }: { meta: ComponentMeta }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${meta.type}`,
+    data: {
+      type: "palette-item",
+      componentType: meta.type,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`component-palette__item ${isDragging ? "component-palette__item--dragging" : ""}`}
+      title={meta.description}
+    >
+      <div className="component-palette__item-icon">
+        {meta.icon}
+      </div>
+      <div className="component-palette__item-info">
+        <div className="component-palette__item-name">
+          {meta.name}
+        </div>
+        <div className="component-palette__item-desc">
+          {meta.description}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ComponentPalette() {
   const [search, setSearch] = useState("");
@@ -40,28 +73,7 @@ export function ComponentPalette() {
                 {categoryLabels[cat]}
               </div>
               {items.map((meta) => (
-                <div
-                  key={meta.type}
-                  className="component-palette__item"
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("component-type", meta.type);
-                    e.dataTransfer.effectAllowed = "copy";
-                  }}
-                  title={meta.description}
-                >
-                  <div className="component-palette__item-icon">
-                    {meta.icon}
-                  </div>
-                  <div className="component-palette__item-info">
-                    <div className="component-palette__item-name">
-                      {meta.name}
-                    </div>
-                    <div className="component-palette__item-desc">
-                      {meta.description}
-                    </div>
-                  </div>
-                </div>
+                <DraggablePaletteItem key={meta.type} meta={meta} />
               ))}
             </div>
           );

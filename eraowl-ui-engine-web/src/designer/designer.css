@@ -582,3 +582,315 @@
     max-height: 200px;
   }
 }
+
+/* ========================================
+   Hierarchical Canvas — Regions
+   ======================================== */
+
+.region-dropzone {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--eut-color-border);
+  border-radius: var(--eut-radius-md);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.region-dropzone--active {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.canvas-region {
+  position: relative;
+  margin-bottom: var(--eut-spacing-sm);
+  border: 1px solid var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  background: var(--eut-color-background);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.canvas-region:hover {
+  border-color: var(--eut-color-primary);
+}
+
+.canvas-region--selected {
+  border-color: var(--eut-color-primary);
+  box-shadow: 0 0 0 1px var(--eut-color-primary);
+}
+
+.canvas-region--dragover {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.canvas-region__header {
+  display: flex;
+  align-items: center;
+  gap: var(--eut-spacing-xs);
+  padding: var(--eut-spacing-xs) var(--eut-spacing-sm);
+  background: var(--eut-color-surface);
+  border-bottom: 1px solid var(--eut-color-border);
+  font-size: var(--eut-typography-font-size-xs);
+  font-weight: var(--eut-typography-font-weight-medium);
+  color: var(--eut-color-text-secondary);
+}
+
+.canvas-region__icon {
+  color: var(--eut-color-primary);
+}
+
+.canvas-region__name {
+  flex: 1;
+}
+
+.canvas-region__type {
+  font-size: 11px;
+  color: var(--eut-color-text-secondary);
+  opacity: 0.6;
+}
+
+.canvas-region__actions {
+  display: none;
+}
+
+.canvas-region:hover .canvas-region__actions {
+  display: flex;
+}
+
+.canvas-region__body {
+  padding: var(--eut-spacing-sm);
+  min-height: 60px;
+}
+
+.canvas-region__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--eut-spacing-md);
+  border: 1px dashed var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  color: var(--eut-color-text-secondary);
+  font-size: var(--eut-typography-font-size-xs);
+  text-align: center;
+}
+
+.canvas-component--selected-overlay {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--eut-color-primary);
+  border-radius: var(--eut-radius-sm);
+  pointer-events: none;
+}
+
+/* ========================================
+   Hierarchical Canvas — Grid Row
+   ======================================== */
+
+.canvas-grid-row {
+  position: relative;
+  margin-bottom: var(--eut-spacing-xs);
+  border: 1px solid var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  background: var(--eut-color-background);
+  cursor: grab;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.canvas-grid-row:hover {
+  border-color: var(--eut-color-secondary);
+}
+
+.canvas-grid-row--selected {
+  border-color: var(--eut-color-primary);
+  box-shadow: 0 0 0 1px var(--eut-color-primary);
+}
+
+.canvas-grid-row--dragover {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.canvas-grid-row__header {
+  display: flex;
+  align-items: center;
+  gap: var(--eut-spacing-xs);
+  padding: var(--eut-spacing-xs) var(--eut-spacing-sm);
+  background: var(--eut-color-surface);
+  border-bottom: 1px solid var(--eut-color-border);
+  font-size: var(--eut-typography-font-size-xs);
+  font-weight: var(--eut-typography-font-weight-medium);
+  color: var(--eut-color-text-secondary);
+}
+
+.canvas-grid-row__icon {
+  color: var(--eut-color-secondary);
+}
+
+.canvas-grid-row__name {
+  flex: 1;
+}
+
+.canvas-grid-row__actions {
+  display: none;
+}
+
+.canvas-grid-row:hover .canvas-grid-row__actions {
+  display: flex;
+}
+
+.canvas-grid-row__body {
+  display: flex;
+  gap: var(--eut-spacing-xs);
+  padding: var(--eut-spacing-sm);
+  min-height: 40px;
+}
+
+.canvas-grid-row__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  color: var(--eut-color-text-secondary);
+  font-size: var(--eut-typography-font-size-xs);
+  text-align: center;
+}
+
+/* ========================================
+   Hierarchical Canvas — Grid Column
+   ======================================== */
+
+.canvas-grid-col {
+  position: relative;
+  flex: 1 1 0;
+  border: 1px solid var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  background: var(--eut-color-background);
+  cursor: grab;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.canvas-grid-col:hover {
+  border-color: var(--eut-color-secondary);
+}
+
+.canvas-grid-col--selected {
+  border-color: var(--eut-color-primary);
+  box-shadow: 0 0 0 1px var(--eut-color-primary);
+}
+
+.canvas-grid-col--dragover {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.canvas-grid-col__header {
+  display: flex;
+  align-items: center;
+  gap: var(--eut-spacing-xs);
+  padding: var(--eut-spacing-xs) var(--eut-spacing-sm);
+  background: var(--eut-color-surface);
+  border-bottom: 1px solid var(--eut-color-border);
+  font-size: var(--eut-typography-font-size-xs);
+  font-weight: var(--eut-typography-font-weight-medium);
+  color: var(--eut-color-text-secondary);
+}
+
+.canvas-grid-col__icon {
+  color: var(--eut-color-secondary);
+}
+
+.canvas-grid-col__name {
+  flex: 1;
+}
+
+.canvas-grid-col__actions {
+  display: none;
+}
+
+.canvas-grid-col:hover .canvas-grid-col__actions {
+  display: flex;
+}
+
+.canvas-grid-col__body {
+  padding: var(--eut-spacing-xs);
+  min-height: 30px;
+}
+
+.canvas-grid-col__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--eut-spacing-sm);
+  border: 1px dashed var(--eut-color-border);
+  border-radius: var(--eut-radius-sm);
+  color: var(--eut-color-text-secondary);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ========================================
+   Field Components
+   ======================================== */
+
+.canvas-field {
+  position: relative;
+  padding: var(--eut-spacing-xs) var(--eut-spacing-sm);
+  margin-bottom: var(--eut-spacing-xs);
+  border: 1px solid transparent;
+  border-radius: var(--eut-radius-sm);
+  cursor: grab;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.canvas-field:hover {
+  border-color: var(--eut-color-border);
+  background: rgba(99, 102, 241, 0.02);
+}
+
+.canvas-field--selected {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.canvas-field__label {
+  font-size: 11px;
+  font-weight: var(--eut-typography-font-weight-medium);
+  color: var(--eut-color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.canvas-field__preview {
+  font-size: var(--eut-typography-font-size-xs);
+}
+
+.canvas-field__actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+}
+
+.canvas-field:hover .canvas-field__actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* ========================================
+   Drag Overlay
+   ======================================== */
+
+.drag-overlay {
+  padding: 8px 12px;
+  background: var(--eut-color-primary);
+  color: #fff;
+  border-radius: var(--eut-radius-sm);
+  font-size: var(--eut-typography-font-size-xs);
+  font-weight: var(--eut-typography-font-weight-medium);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: grabbing;
+}

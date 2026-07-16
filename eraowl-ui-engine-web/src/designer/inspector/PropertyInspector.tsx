@@ -1,6 +1,9 @@
 import { useUIStore } from "../../store/useUIStore";
 import { getComponentMeta } from "../palette/componentRegistry";
 
+const STYLE_FIELDS_FOR_DATA = ["Lov", "LovSelect"];
+const STYLE_FIELDS_FOR_FORM = ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput"];
+
 export function PropertyInspector() {
   const selectedComponentId = useUIStore((s) => s.selectedComponentId);
   const components = useUIStore((s) => s.components);
@@ -19,6 +22,7 @@ export function PropertyInspector() {
   }
 
   const meta = getComponentMeta(selected.type);
+  const showStyleOverrides = STYLE_FIELDS_FOR_DATA.includes(selected.type) || STYLE_FIELDS_FOR_FORM.includes(selected.type);
 
   return (
     <aside className="property-inspector">
@@ -148,6 +152,52 @@ export function PropertyInspector() {
               }
             />
           </div>
+
+          {showStyleOverrides && (
+            <>
+              <div className="property-inspector__field">
+                <label className="property-inspector__label">fontSize</label>
+                <input
+                  className="property-inspector__input"
+                  type="text"
+                  value={(selected.props["fontSize"] as string) ?? ""}
+                  placeholder="e.g. 14px, 1rem"
+                  onChange={(e) =>
+                    updateComponent(selected.id, {
+                      props: { ...selected.props, fontSize: e.target.value },
+                    })
+                  }
+                />
+              </div>
+              <div className="property-inspector__field">
+                <label className="property-inspector__label">fontColor</label>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    className="property-inspector__input"
+                    type="color"
+                    value={(selected.props["fontColor"] as string) || "#000000"}
+                    onChange={(e) =>
+                      updateComponent(selected.id, {
+                        props: { ...selected.props, fontColor: e.target.value },
+                      })
+                    }
+                    style={{ width: "40px", height: "32px", padding: "2px", cursor: "pointer" }}
+                  />
+                  <input
+                    className="property-inspector__input"
+                    type="text"
+                    value={(selected.props["fontColor"] as string) ?? ""}
+                    placeholder="e.g. #333333"
+                    onChange={(e) =>
+                      updateComponent(selected.id, {
+                        props: { ...selected.props, fontColor: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
