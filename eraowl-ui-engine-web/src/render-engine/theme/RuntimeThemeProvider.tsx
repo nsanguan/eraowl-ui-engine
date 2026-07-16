@@ -1,29 +1,38 @@
-import type { ReactNode } from "react";
-import { useResolvedTokens } from "../hooks/useResolvedTokens";
+import { type ReactNode, useMemo } from 'react'
+import type { Tokens } from './tokenTypes'
+import { resolveTokens } from './tokenResolver'
 
 interface RuntimeThemeProviderProps {
-  themeStyleName: string;
-  children: ReactNode;
+  themeTokens: Tokens
+  styleRef?: string
+  children: ReactNode
 }
 
 export function RuntimeThemeProvider({
-  themeStyleName,
+  themeTokens,
+  styleRef,
   children,
 }: RuntimeThemeProviderProps) {
-  const tokens = useResolvedTokens(themeStyleName);
+  const resolvedTokens = useMemo(
+    () => resolveTokens(themeTokens, undefined, styleRef),
+    [themeTokens, styleRef]
+  )
 
-  const style: Record<string, string> = {};
-  for (const [key, value] of Object.entries(tokens)) {
-    style[`--eut-${key}`] = String(value);
-  }
+  const cssVars = useMemo(() => {
+    const vars: Record<string, string> = {}
+    for (const [category, tokens] of Object.entries(resolvedTokens)) {
+      if (typeof tokens === 'object' && tokens !== null) {
+        for (const [key, value] of Object.entries(tokens)) {
+          vars[`--eut-${category}-${key}`] = String(value)
+        }
+      }
+    }
+    return vars
+  }, [resolvedTokens])
 
   return (
-    <div
-      className="eods-runtime-theme-provider"
-      data-eut-theme={themeStyleName}
-      style={style as React.CSSProperties}
-    >
+    <div data-eut-theme={styleRef ?? 'default'} style={cssVars}>
       {children}
     </div>
-  );
+  )
 }

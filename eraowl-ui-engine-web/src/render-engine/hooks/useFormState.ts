@@ -4,6 +4,7 @@ export function useFormState() {
   const formValues = useRenderStore((s) => s.formValues);
   const touched = useRenderStore((s) => s.touched);
   const errors = useRenderStore((s) => s.errors);
+  const submitState = useRenderStore((s) => s.submitState);
 
   const setFieldValue = (name: string, value: unknown) => {
     useRenderStore.getState().setFieldValue(name, value);
@@ -17,6 +18,10 @@ export function useFormState() {
     useRenderStore.getState().setErrors(errors);
   };
 
+  const setSubmitState = (state: 'idle' | 'validating' | 'ready' | 'submitting' | 'error') => {
+    useRenderStore.getState().setSubmitState(state);
+  };
+
   const reset = () => {
     useRenderStore.getState().reset();
   };
@@ -25,9 +30,11 @@ export function useFormState() {
     formValues,
     touched,
     errors,
+    submitState,
     setFieldValue,
     setFieldTouched,
     setErrors,
+    setSubmitState,
     reset,
   };
 }

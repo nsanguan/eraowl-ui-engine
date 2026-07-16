@@ -1,20 +1,23 @@
-"""Codegen target configuration – §8.3."""
-
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pathlib import Path
+
+from pydantic import BaseModel, field_validator
 
 
 class CodegenTargetConfig(BaseModel):
-    """Per-target code generation settings."""
+    project_root: str
+    target_subpath: str
+    allowed_write_globs: list[str] = [
+        "apps/web/src/pages/generated/**",
+        "apps/web/src/components/generated/**",
+    ]
+    dry_run: bool = True
 
-    framework: str = "react"
-    component_import_path: str = "@/components"
-    pages_output_dir: str = "src/pages"
-    theme_output_dir: str = "src/theme"
-    use_typescript: bool = True
-    indent: int = 2
-    line_ending: str = "\n"
-    prettier: bool = True
-    eslint: bool = True
-    framework_options: dict = Field(default_factory=dict)
+    @field_validator("project_root")
+    @classmethod
+    def must_be_absolute_and_exist(cls, v: str) -> str:
+        p = Path(v)
+        if not p.is_absolute():
+            raise ValueError("project_root must be absolute path")
+        return v

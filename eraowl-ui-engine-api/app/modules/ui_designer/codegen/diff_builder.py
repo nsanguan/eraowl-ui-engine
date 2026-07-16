@@ -1,46 +1,30 @@
-"""Unified diff builder for codegen output – §8.6."""
-
 from __future__ import annotations
 
 import difflib
-from dataclasses import dataclass
-
-
-@dataclass
-class FileDiff:
-    path: str
-    old_content: str
-    new_content: str
-    unified_diff: str
-
-    @property
-    def has_changes(self) -> bool:
-        return self.old_content != self.new_content
+from pathlib import Path
 
 
 class DiffBuilder:
-    """Builds unified diffs for files that need updating."""
+    def __init__(self, project_root: str):
+        self.root = Path(project_root)
 
-    @staticmethod
-    def build(rel_path: str, old_content: str, new_content: str, n_lines: int = 3) -> FileDiff:
-        diff_lines = difflib.unified_diff(
-            old_content.splitlines(keepends=True),
-            new_content.splitlines(keepends=True),
-            fromfile=f"a/{rel_path}",
-            tofile=f"b/{rel_path}",
-            n=n_lines,
-        )
-        return FileDiff(
-            path=rel_path,
-            old_content=old_content,
-            new_content=new_content,
-            unified_diff="".join(diff_lines),
-        )
+    def build_diff(self, filepath: str, new_content: str) -> str | None:
+        full_path = self.root / filepath
+        
+        if full_path.exists():
+            old_content = full_path.read_text()
+            if old_content == new_content:
+                return None
+            
+            diff = difflib.unified_diff(
+                old_content.splitlines(keepends=True),
+                new_content.splitlines(keepends=True),
+                fromfile=f"a/{filepath}",
+                tofile=f"b/{filepath}",
+            )
+            return "".join(diff)
+        else:
+            return f"+++ new file {filepath}\n" + new_content
 
-    @staticmethod
-    def build_new(rel_path: str, content: str) -> FileDiff:
-        return DiffBuilder.build(rel_path, "", content)
-
-    @staticmethod
-    def build_deleted(rel_path: str, content: str) -> FileDiff:
-        return DiffBuilder.build(rel_path, content, "")
+    def build_diffs(self, files: dict[str, str]) -> dict[str, str | None]:
+        return {fp: self.build_diff(fp, content) for fp, content in files.items()}

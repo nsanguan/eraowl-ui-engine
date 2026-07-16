@@ -41,9 +41,11 @@ app.add_middleware(
 # ── Routers ─────────────────────────────────────────────────────────────────
 from app.modules.ui_designer.router import router as ui_designer_router  # noqa: E402
 from app.modules.ui_designer.codegen.router import router as codegen_router  # noqa: E402
+from app.modules.ui_designer.ai.router import router as ai_router  # noqa: E402
 
 app.include_router(ui_designer_router, prefix="/api/v1", tags=["ui-designer"])
 app.include_router(codegen_router, prefix="/api/v1", tags=["codegen"])
+app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 
 
 @app.get("/health")

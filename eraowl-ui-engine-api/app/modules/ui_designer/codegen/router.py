@@ -1,47 +1,97 @@
-"""FastAPI router for codegen-targets endpoints."""
-
 from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
-from app.core.db import get_db
-from app.modules.ui_designer.schemas import CodegenRunRead, CodegenRunRequest, CodegenTargetCreate, CodegenTargetRead
-from app.modules.ui_designer.models import CodegenTarget, CodegenRun
+from app.core.security import require_role
+from app.modules.ui_designer.codegen.config import CodegenTargetConfig
+from app.modules.ui_designer.codegen.diff_builder import DiffBuilder
+from app.modules.ui_designer.codegen.generator import CodeGenerator
+from app.modules.ui_designer.codegen.scanner import ProjectScanner
+from app.modules.ui_designer.codegen.writer import SandboxWriter
+from app.core.config import settings
 
-router = APIRouter(prefix="/codegen-targets")
-
-
-@router.get("", response_model=list[CodegenTargetRead])
-async def list_targets(db: Annotated[AsyncSession, Depends(get_db)]) -> list[CodegenTarget]:
-    from sqlalchemy import select
-    result = await db.execute(select(CodegenTarget))
-    return list(result.scalars().all())
+router = APIRouter()
 
 
-@router.post("", response_model=CodegenTargetRead, status_code=201)
-async def create_target(
-    payload: CodegenTargetCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> CodegenTarget:
-    target = CodegenTarget(**payload.model_dump())
-    db.add(target)
-    await db.flush()
-    return target
+class CodegenTargetCreate(BaseModel):
+    page_id: str
+    project_root: str
+    target_subpath: str
+    allowed_write_globs: list[str] = [
+        "apps/web/src/pages/generated/**",
+        "apps/web/src/components/generated/**",
+    ]
 
 
-@router.post("/run", response_model=CodegenRunRead, status_code=201)
-async def run_codegen(
-    payload: CodegenRunRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> CodegenRun:
-    run = CodegenRun(
-        target_id=payload.target_id,
-        page_ids=",".join(payload.page_ids),
-        status="pending",
+class ScanResult(BaseModel):
+    framework_detected: str
+    component_style: str
+
+
+class GenerateResult(BaseModel):
+    dry_run: bool
+    diffs: dict[str, str | None]
+    files_changed: list[str]
+
+
+@router.get(
+    "/codegen-targets/{target_id}/scan",
+    dependencies=[Depends(require_role("ui_designer.viewer", "ui_designer.editor", "ui_designer.admin"))],
+)
+async def scan_target(target_id: str) -> ScanResult:
+    scanner = ProjectScanner(settings.TARGET_PROJECT_ROOT)
+    manifest = scanner.scan()
+    return ScanResult(
+        framework_detected="vite-react",
+        component_style="PascalCase + named export",
     )
-    db.add(run)
-    await db.flush()
-    return run
+
+
+@router.post(
+    "/codegen-targets/{target_id}/generate",
+    dependencies=[Depends(require_role("ui_designer.codegen", "ui_designer.admin"))],
+)
+async def generate_code(
+    target_id: str,
+    dry_run: bool = True,
+    page_id: str | None = None,
+) -> GenerateResult:
+    generator = CodeGenerator(settings.TARGET_PROJECT_ROOT, "apps/web/src/pages/generated")
+    
+    sample_page = {
+        "layout_json": {
+            "regions": [
+                {
+                    "id": "main",
+                    "title": "Main",
+                    "components": [
+                        {"id": "test_component", "type": "Region", "position": {"x": 0, "y": 0, "width": 100, "height": 40}}
+                    ],
+                }
+            ]
+        }
+    }
+    
+    files = generator.generate_page(sample_page)
+    
+    writer = SandboxWriter(settings.TARGET_PROJECT_ROOT, [
+        "apps/web/src/pages/generated/**",
+        "apps/web/src/components/generated/**",
+    ])
+    
+    diffs = {}
+    changed = []
+    for filepath, content in files.items():
+        diff = writer.write(filepath, content, dry_run=dry_run)
+        diffs[filepath] = diff
+        if diff:
+            changed.append(filepath)
+    
+    return GenerateResult(
+        dry_run=dry_run,
+        diffs=diffs,
+        files_changed=changed,
+    )

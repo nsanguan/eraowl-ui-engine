@@ -1,25 +1,34 @@
-import type { Layout } from "./theme/tokenTypes";
-import { componentRegistry } from "./registry/componentRegistry";
-import { RuntimeThemeProvider } from "./theme/RuntimeThemeProvider";
+import { useMemo } from 'react'
+import { componentRegistry } from './registry/componentRegistry'
+import type { LayoutJson, Component } from './types'
 
 interface UIRendererProps {
-  layout: Layout;
-  themeStyleName?: string;
+  layout: LayoutJson
+  resolveBaseUrl?: string
+  token?: string
+  onValidSubmit?: (payload: Record<string, unknown>) => void
+  registry?: Record<string, React.ComponentType<Record<string, unknown>>>
 }
 
-export function UIRenderer({ layout, themeStyleName = "vita" }: UIRendererProps) {
-  return (
-    <RuntimeThemeProvider themeStyleName={themeStyleName}>
-      <div className="eods-render-root" data-eut-theme={themeStyleName}>
-        {layout.components.map((comp) => {
-          const Component = componentRegistry[comp.type];
-          if (!Component) {
-            console.warn(`Unknown component type: ${comp.type}`);
-            return null;
-          }
-          return <Component key={comp.id} {...comp} />;
-        })}
-      </div>
-    </RuntimeThemeProvider>
-  );
+export function UIRenderer({
+  layout,
+  registry = componentRegistry,
+}: UIRendererProps) {
+  const renderedRegions = useMemo(() => {
+    return layout.regions.map((region) => {
+      return (
+        <div key={region.id} data-eowl-region={region.id}>
+          {region.components.map((comp: Component) => {
+            const Component = registry[comp.type]
+            if (!Component) {
+              return <div key={comp.id}>Unknown: {comp.type}</div>
+            }
+            return <Component key={comp.id} {...comp} />
+          })}
+        </div>
+      )
+    })
+  }, [layout, registry])
+
+  return <div data-eowl-renderer="">{renderedRegions}</div>
 }

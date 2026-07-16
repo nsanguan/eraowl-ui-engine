@@ -1,19 +1,19 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/eraowl-ui-engine",
-    "rootDir": "."
+    "outDir": "dist/eraowl-ui-engine",
+    "declaration": true
   },
   "include": [
     "src/render-engine/**",
     "src/store/useRenderStore.ts",
-    "src/themes/index.ts"
+    "src/themes/**",
+    "src/types.ts"
   ],
   "exclude": [
     "src/designer/**",
     "src/api/**",
-    "src/app/**",
-    "src/main.tsx",
-    "node_modules"
+    "src/pages/**",
+    "src/app/**"
   ]
 }

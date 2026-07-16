@@ -1,77 +1,49 @@
-import type { Layout, LayoutComponent } from "../theme/tokenTypes";
+import type { LayoutJson } from '../types'
 
 interface ValidationResult {
-  valid: boolean;
-  errors: Array<{
-    componentId: string;
-    field: string;
-    message: string;
-  }>;
+  valid: boolean
+  errors: Record<string, string[]>
 }
 
-export function validateLayout(layout: Layout, formValues: Record<string, unknown>): ValidationResult {
-  const errors: ValidationResult["errors"] = [];
+export function formValidator(
+  layout: LayoutJson,
+  formValues: Record<string, unknown>
+): ValidationResult {
+  const errors: Record<string, string[]> = {}
 
-  for (const comp of layout.components) {
-    validateComponent(comp, formValues, errors);
+  for (const region of layout.regions) {
+    for (const comp of region.components) {
+      if (!comp.validation) continue
+      const value = formValues[comp.id]
+      const fieldErrors: string[] = []
+
+      if (comp.validation.required && (value === undefined || value === '')) {
+        fieldErrors.push('This field is required')
+      }
+
+      if (comp.validation.minLength !== undefined && typeof value === 'string' && value.length < comp.validation.minLength) {
+        fieldErrors.push(`Minimum length is ${comp.validation.minLength}`)
+      }
+
+      if (comp.validation.maxLength !== undefined && typeof value === 'string' && value.length > comp.validation.maxLength) {
+        fieldErrors.push(`Maximum length is ${comp.validation.maxLength}`)
+      }
+
+      if (comp.validation.pattern && typeof value === 'string') {
+        const regex = new RegExp(comp.validation.pattern)
+        if (!regex.test(value)) {
+          fieldErrors.push('Invalid format')
+        }
+      }
+
+      if (fieldErrors.length > 0) {
+        errors[comp.id] = fieldErrors
+      }
+    }
   }
 
   return {
-    valid: errors.length === 0,
+    valid: Object.keys(errors).length === 0,
     errors,
-  };
-}
-
-function validateComponent(
-  comp: LayoutComponent,
-  formValues: Record<string, unknown>,
-  errors: ValidationResult["errors"]
-) {
-  if (comp.type === "lov_select" && comp.required) {
-    const name = (comp.name as string) ?? comp.id;
-    const value = formValues[name];
-    if (value === undefined || value === "" || value === null) {
-      errors.push({
-        componentId: comp.id,
-        field: name,
-        message: `${comp.label ?? name} is required`,
-      });
-    }
-  }
-
-  if (comp.type === "text_field" && comp.validation) {
-    const name = (comp.name as string) ?? comp.id;
-    const value = String(formValues[name] ?? "");
-    const rules = comp.validation as Record<string, unknown>;
-
-    if (rules.minLength && value.length < (rules.minLength as number)) {
-      errors.push({
-        componentId: comp.id,
-        field: name,
-        message: `Minimum length is ${rules.minLength}`,
-      });
-    }
-
-    if (rules.maxLength && value.length > (rules.maxLength as number)) {
-      errors.push({
-        componentId: comp.id,
-        field: name,
-        message: `Maximum length is ${rules.maxLength}`,
-      });
-    }
-
-    if (rules.pattern && !new RegExp(rules.pattern as string).test(value)) {
-      errors.push({
-        componentId: comp.id,
-        field: name,
-        message: (rules.message as string) ?? "Invalid format",
-      });
-    }
-  }
-
-  if (comp.children) {
-    for (const child of comp.children) {
-      validateComponent(child, formValues, errors);
-    }
   }
 }

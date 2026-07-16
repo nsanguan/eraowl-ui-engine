@@ -1,40 +1,45 @@
-"""Code generator stub – §8.5.
-
-Transforms layout JSON + component schemas into framework-specific source files.
-"""
-
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
+
+from app.modules.ui_designer.codegen.scanner import ProjectScanner
 
 
 class CodeGenerator:
-    """Generates source code for a given layout and component tree."""
+    def __init__(self, project_root: str, target_subpath: str):
+        self.scanner = ProjectScanner(project_root)
+        self.target_subpath = target_subpath
 
-    def __init__(self, framework: str = "react", config: dict[str, Any] | None = None) -> None:
-        self.framework = framework
-        self.config = config or {}
+    def generate_component(self, component: dict, convention: dict) -> str:
+        comp_type = component.get("type", "div")
+        comp_id = component.get("id", "unknown")
+        class_name = comp_id.title().replace("-", "")
 
-    def generate_page(self, page_name: str, layout_json: str, component_props: dict[str, Any] | None = None) -> str:
-        """Generate a page component file."""
-        # Stub – real impl parses layout tree and emits JSX/TSX
         return (
-            f"// eraowl-gen:page\n"
-            f"import {{ Box }} from '@eraowl/ui';\n\n"
-            f"export default function {page_name}() {{\n"
-            f"  return (\n"
-            f"    <Box>\n"
-            f"      {/* Auto-generated – do not edit manually */}}\n"
-            f"    </Box>\n"
-            f"  );\n"
-            f"}}\n"
+            "import { FC } from 'react'\n"
+            "\n"
+            f"interface {class_name}Props {{\n"
+            "  className?: string\n"
+            "}\n"
+            "\n"
+            f"export const {class_name}: FC<{class_name}Props> = ({{ className }}) => {{\n"
+            "  return (\n"
+            f'    <div className={{className}} data-component="{comp_id}">\n'
+            f"      {{/* {comp_type} */}}\n"
+            "    </div>\n"
+            "  )\n"
+            "}\n"
         )
 
-    def generate_theme(self, theme_name: str, styles: dict[str, Any]) -> str:
-        """Generate a theme file."""
-        return (
-            f"// eraowl-gen:theme\n"
-            f"export const {theme_name}Theme = {{\n"
-            f"  // Auto-generated theme tokens\n"
-            f"}};\n"
-        )
+    def generate_page(self, page_data: dict) -> dict[str, str]:
+        files: dict[str, str] = {}
+        layout = page_data.get("layout_json", {})
+        
+        for region in layout.get("regions", []):
+            for component in region.get("components", []):
+                comp_id = component.get("id", "unknown")
+                filename = f"{comp_id}.tsx"
+                filepath = f"{self.target_subpath}/{filename}"
+                files[filepath] = self.generate_component(component, {})
+        
+        return files

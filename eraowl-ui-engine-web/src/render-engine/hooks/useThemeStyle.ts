@@ -1,14 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
-import type { ThemeStyle } from "../theme/tokenTypes";
+import { useQuery } from '@tanstack/react-query'
 
-export function useThemeStyle(styleName: string) {
+export function useThemeStyle(styleRef: string | undefined) {
   return useQuery({
-    queryKey: ["theme-style", styleName],
-    queryFn: async (): Promise<ThemeStyle> => {
-      const response = await import(`../../themes/eut/styles/${styleName}.json`);
-      return response.default ?? response;
+    queryKey: ['theme-style', styleRef],
+    queryFn: async () => {
+      if (!styleRef) return null
+      const [themeId, styleKey] = styleRef.split('.')
+      const response = await fetch(`/api/v1/themes/${themeId}/styles/${styleKey}`)
+      if (!response.ok) return null
+      return response.json()
     },
-    staleTime: Infinity,
-    enabled: !!styleName,
-  });
+    enabled: !!styleRef,
+    staleTime: 60_000,
+  })
 }

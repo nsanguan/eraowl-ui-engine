@@ -1,32 +1,29 @@
-import { useThemeRollerStore } from "./useThemeRollerStore";
-import { ThemeStylePicker } from "./ThemeStylePicker";
+import { useThemeRollerStore } from './useThemeRollerStore'
 
 export function ThemeRoller() {
-  const draftTokens = useThemeRollerStore((s) => s.draftTokens);
-  const setDraftToken = useThemeRollerStore((s) => s.setDraftToken);
-  const resetDraft = useThemeRollerStore((s) => s.resetDraft);
+  const { draftTokens, setDraftToken, resetDraft } = useThemeRollerStore()
+
+  const colorPresets = [
+    { name: 'Primary', path: 'color.primary', default: '#6366f1' },
+    { name: 'Secondary', path: 'color.secondary', default: '#64748b' },
+    { name: 'Background', path: 'color.background', default: '#ffffff' },
+    { name: 'Text', path: 'color.text', default: '#0f172a' },
+  ]
 
   return (
-    <aside className="eods-theme-roller">
+    <div className="theme-roller">
       <h3>Theme Roller</h3>
-      <ThemeStylePicker />
-
-      <div className="eods-theme-roller__tokens">
-        {Object.entries(draftTokens).map(([key, value]) => (
-          <label key={key} className="eods-theme-roller__field">
-            <span>{key}</span>
-            <input
-              type="text"
-              value={String(value)}
-              onChange={(e) => setDraftToken(key, e.target.value)}
-            />
-          </label>
-        ))}
-      </div>
-
-      <div className="eods-theme-roller__actions">
-        <button onClick={() => resetDraft()}>Reset</button>
-      </div>
-    </aside>
-  );
+      {colorPresets.map((preset) => (
+        <div key={preset.path} className="theme-roller__field">
+          <label>{preset.name}</label>
+          <input
+            type="color"
+            value={String(draftTokens[preset.path] ?? preset.default)}
+            onChange={(e) => setDraftToken(preset.path, e.target.value)}
+          />
+        </div>
+      ))}
+      <button onClick={resetDraft}>Reset</button>
+    </div>
+  )
 }

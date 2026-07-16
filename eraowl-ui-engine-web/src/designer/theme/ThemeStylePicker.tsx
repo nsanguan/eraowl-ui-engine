@@ -1,29 +1,36 @@
-import { useThemeStyle } from "../../render-engine/hooks/useThemeStyle";
+import { useState } from 'react'
 
-const PRESETS = ["vita", "vita-slate", "vita-red"] as const;
+const STYLE_PRESETS = [
+  { key: 'vita', displayName: 'Vita' },
+  { key: 'vita-slate', displayName: 'Vita - Slate' },
+  { key: 'vita-red', displayName: 'Vita - Red' },
+]
 
-export function ThemeStylePicker() {
-  const { data: currentStyle } = useThemeStyle("vita");
+interface ThemeStylePickerProps {
+  value?: string
+  onChange: (styleRef: string) => void
+}
+
+export function ThemeStylePicker({ value, onChange }: ThemeStylePickerProps) {
+  const [selected, setSelected] = useState(value ?? 'vita')
+
+  const handleChange = (styleKey: string) => {
+    setSelected(styleKey)
+    onChange(`eut.${styleKey}`)
+  }
 
   return (
-    <div className="eods-theme-style-picker">
-      <h4>Theme Style Preset</h4>
-      <div className="eods-theme-style-picker__list">
-        {PRESETS.map((preset) => (
-          <button
-            key={preset}
-            className={`eods-theme-style-picker__item ${
-              currentStyle?.name === preset ? "eods-theme-style-picker__item--active" : ""
-            }`}
-            onClick={() => {
-              // TODO: dispatch SET_THEME_STYLE to UI store
-              console.log("Select theme style:", preset);
-            }}
-          >
-            {preset}
-          </button>
-        ))}
-      </div>
+    <div className="theme-style-picker">
+      <h3>Theme Style</h3>
+      {STYLE_PRESETS.map((preset) => (
+        <button
+          key={preset.key}
+          className={`theme-style-picker__btn ${selected === preset.key ? 'active' : ''}`}
+          onClick={() => handleChange(preset.key)}
+        >
+          {preset.displayName}
+        </button>
+      ))}
     </div>
-  );
+  )
 }
