@@ -291,6 +291,18 @@
   transform-origin: top left;
 }
 
+.canvas-dropzone {
+  min-height: 400px;
+  border: 2px dashed transparent;
+  border-radius: var(--eut-radius-md);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.canvas-dropzone--active {
+  border-color: var(--eut-color-primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
 .eods-canvas__grid {
   position: absolute;
   inset: 0;
@@ -586,21 +598,6 @@
 /* ========================================
    Hierarchical Canvas — Regions
    ======================================== */
-
-.region-dropzone {
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--eut-color-border);
-  border-radius: var(--eut-radius-md);
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.region-dropzone--active {
-  border-color: var(--eut-color-primary);
-  background: rgba(99, 102, 241, 0.06);
-}
 
 .canvas-region {
   position: relative;

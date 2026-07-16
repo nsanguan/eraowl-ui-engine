@@ -38,7 +38,7 @@ export function DroppableGridRow({ component }: DroppableGridRowProps) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `droppable-${component.id}`,
     data: {
-      containerType: "GridRow",
+      containerType: "gridrow",
       containerId: component.id,
     },
   });

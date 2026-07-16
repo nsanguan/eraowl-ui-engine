@@ -2,6 +2,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -12,12 +13,9 @@ import { useUIStore } from "../../store/useUIStore";
 import { getComponentMeta } from "../palette/componentRegistry";
 import { DroppableRegion } from "./DroppableRegion";
 
-const ACCEPTED_CANVAS_TYPES = ["Region"];
-
 export function HierarchicalCanvas() {
   const components = useUIStore((s) => s.components);
   const addComponent = useUIStore((s) => s.addComponent);
-  const moveComponent = useUIStore((s) => s.moveComponent);
   const selectedComponentId = useUIStore((s) => s.selectedComponentId);
   const setSelectedComponent = useUIStore((s) => s.setSelectedComponent);
   const canvasZoom = useUIStore((s) => s.canvasZoom);
@@ -38,13 +36,8 @@ export function HierarchicalCanvas() {
     const { active } = event;
     const data = active.data.current;
     if (data) {
-      if (data.type === "palette-item") {
-        setActiveId(`palette-${data.componentType}`);
-        setActiveType(data.componentType);
-      } else {
-        setActiveId(active.id as string);
-        setActiveType(data.componentType);
-      }
+      setActiveId(active.id as string);
+      setActiveType(data.componentType);
     }
   };
 
@@ -61,32 +54,24 @@ export function HierarchicalCanvas() {
     if (!activeData || !overData) return;
 
     const componentType = activeData.componentType;
-    const targetContainerType = overData.containerType;
-    const targetId = overData.containerId;
+    const containerType = overData.containerType;
+    const containerId = overData.containerId;
 
-    if (activeData.type === "palette-item") {
-      if (targetContainerType === "canvas" && ACCEPTED_CANVAS_TYPES.includes(componentType)) {
-        addComponent(componentType, getComponentMeta(componentType)?.defaultProps ?? {}, undefined, null);
-      } else if (targetContainerType === "Region" && componentType === "GridRow") {
-        addComponent(componentType, getComponentMeta(componentType)?.defaultProps ?? {}, undefined, targetId);
-      } else if (targetContainerType === "GridRow" && componentType === "GridColumn") {
-        addComponent(componentType, getComponentMeta(componentType)?.defaultProps ?? {}, undefined, targetId);
-      } else if (targetContainerType === "GridColumn" && ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput", "Lov", "LovSelect"].includes(componentType)) {
-        addComponent(componentType, getComponentMeta(componentType)?.defaultProps ?? {}, undefined, targetId);
-      }
-    } else {
-      if (activeData.type === "sortable-item") {
-        const draggableType = activeData.componentType;
-        if (targetContainerType === "canvas" && ACCEPTED_CANVAS_TYPES.includes(draggableType)) {
-          moveComponent(active.id as string, null, 0);
-        } else if (targetContainerType === "Region" && draggableType === "GridRow") {
-          moveComponent(active.id as string, targetId, 0);
-        } else if (targetContainerType === "GridRow" && draggableType === "GridColumn") {
-          moveComponent(active.id as string, targetId, 0);
-        } else if (targetContainerType === "GridColumn" && ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput", "Lov", "LovSelect"].includes(draggableType)) {
-          moveComponent(active.id as string, targetId, 0);
-        }
-      }
+    if (!componentType || !containerType) return;
+
+    const defaultProps = getComponentMeta(componentType)?.defaultProps ?? {};
+
+    if (containerType === "canvas" && componentType === "Region") {
+      addComponent(componentType, defaultProps, undefined, null);
+    } else if (containerType === "region" && componentType === "GridRow") {
+      addComponent(componentType, defaultProps, undefined, containerId);
+    } else if (containerType === "gridrow" && componentType === "GridColumn") {
+      addComponent(componentType, defaultProps, undefined, containerId);
+    } else if (
+      containerType === "gridcol" &&
+      ["InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput", "Lov", "LovSelect"].includes(componentType)
+    ) {
+      addComponent(componentType, defaultProps, undefined, containerId);
     }
   };
 
@@ -102,16 +87,16 @@ export function HierarchicalCanvas() {
         style={{ transform: `scale(${canvasZoom})`, position: "relative" }}
       >
         {showGrid && <div className="eods-canvas__grid" />}
-        <div
-          className={`eods-canvas__content ${regions.length > 0 ? "eods-canvas__content--has-items" : ""}`}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setSelectedComponent(null);
-            }
-          }}
-        >
-          {regions.length === 0 ? (
-            <DroppableRegion id="canvas-dropzone" isCanvasDropzone>
+        <CanvasDropZone>
+          <div
+            className={`eods-canvas__content ${regions.length > 0 ? "eods-canvas__content--has-items" : ""}`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedComponent(null);
+              }
+            }}
+          >
+            {regions.length === 0 ? (
               <div className="eods-canvas__empty">
                 <div className="eods-canvas__empty-icon">◻</div>
                 <div className="eods-canvas__empty-text">
@@ -121,17 +106,17 @@ export function HierarchicalCanvas() {
                   Only Region components can be placed directly on the canvas
                 </div>
               </div>
-            </DroppableRegion>
-          ) : (
-            regions.map((comp) => (
-              <DroppableRegion key={comp.id} id={comp.id} component={comp}>
-                {selectedComponentId === comp.id && (
-                  <div className="canvas-component--selected-overlay" />
-                )}
-              </DroppableRegion>
-            ))
-          )}
-        </div>
+            ) : (
+              regions.map((comp) => (
+                <DroppableRegion key={comp.id} component={comp}>
+                  {selectedComponentId === comp.id && (
+                    <div className="canvas-component--selected-overlay" />
+                  )}
+                </DroppableRegion>
+              ))
+            )}
+          </div>
+        </CanvasDropZone>
       </div>
 
       <DragOverlay>
@@ -142,5 +127,24 @@ export function HierarchicalCanvas() {
         ) : null}
       </DragOverlay>
     </DndContext>
+  );
+}
+
+function CanvasDropZone({ children }: { children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "canvas-dropzone",
+    data: {
+      containerType: "canvas",
+      containerId: null,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`canvas-dropzone ${isOver ? "canvas-dropzone--active" : ""}`}
+    >
+      {children}
+    </div>
   );
 }

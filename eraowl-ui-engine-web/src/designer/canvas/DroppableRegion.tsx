@@ -9,64 +9,40 @@ import { DroppableGridRow } from "./DroppableGridRow";
 import { getComponentMeta } from "../palette/componentRegistry";
 
 interface DroppableRegionProps {
-  id: string;
-  component?: DesignComponent;
-  isCanvasDropzone?: boolean;
+  component: DesignComponent;
   children?: React.ReactNode;
 }
 
-export function DroppableRegion({
-  id,
-  component,
-  isCanvasDropzone,
-  children,
-}: DroppableRegionProps) {
+export function DroppableRegion({ component, children }: DroppableRegionProps) {
   const components = useUIStore((s) => s.components);
   const selectedComponentId = useUIStore((s) => s.selectedComponentId);
   const setSelectedComponent = useUIStore((s) => s.setSelectedComponent);
   const removeComponent = useUIStore((s) => s.removeComponent);
 
   const { setNodeRef, isOver } = useDroppable({
-    id,
+    id: `region-${component.id}`,
     data: {
-      containerType: "Region",
-      containerId: component?.id ?? null,
+      containerType: "region",
+      containerId: component.id,
     },
   });
 
-  const gridRows = components.filter((c) => c.parentId === id);
+  const gridRows = components.filter((c) => c.parentId === component.id);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (component) {
-      setSelectedComponent(component.id);
-    }
+    setSelectedComponent(component.id);
   };
-
-  if (isCanvasDropzone) {
-    return (
-      <div
-        ref={setNodeRef}
-        className={`region-dropzone ${isOver ? "region-dropzone--active" : ""}`}
-        data-container-type="Region"
-        data-container-id={id}
-      >
-        {children}
-      </div>
-    );
-  }
 
   return (
     <div
       ref={setNodeRef}
-      className={`canvas-region ${selectedComponentId === id ? "canvas-region--selected" : ""} ${isOver ? "canvas-region--dragover" : ""}`}
-      data-container-type="Region"
-      data-container-id={id}
+      className={`canvas-region ${selectedComponentId === component.id ? "canvas-region--selected" : ""} ${isOver ? "canvas-region--dragover" : ""}`}
       onClick={handleClick}
     >
       <div className="canvas-region__header">
         <span className="canvas-region__icon">{getComponentMeta("Region")?.icon}</span>
-        <span className="canvas-region__name">{component?.name}</span>
+        <span className="canvas-region__name">{component.name}</span>
         <span className="canvas-region__type">Region</span>
         <div className="canvas-region__actions">
           <button
@@ -74,7 +50,7 @@ export function DroppableRegion({
             title="Delete region"
             onClick={(e) => {
               e.stopPropagation();
-              removeComponent(id);
+              removeComponent(component.id);
             }}
           >
             ×
@@ -97,6 +73,7 @@ export function DroppableRegion({
           )}
         </SortableContext>
       </div>
+      {children}
     </div>
   );
 }
