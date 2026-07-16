@@ -14,7 +14,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - eraowl-net
+      - eraowl-ui-net
 
   api:
     build:
@@ -39,7 +39,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - eraowl-net
+      - eraowl-ui-net
 
   web:
     build:
@@ -61,12 +61,12 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - eraowl-net
+      - eraowl-ui-net
 
 volumes:
   redis_data:
     driver: local
 
 networks:
-  eraowl-net:
+  eraowl-ui-net:
     driver: bridge
