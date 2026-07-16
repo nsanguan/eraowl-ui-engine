@@ -1,5 +1,8 @@
 # EraOwl UI Engine
 
+[![CI](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/ci.yml)
+[![Deploy](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/deploy.yml/badge.svg)](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/deploy.yml)
+
 Low-code Render Engine — Plug-and-Play UI service for the EraOwl ecosystem.
 
 ## Overview
@@ -169,6 +172,45 @@ Inspired by Oracle APEX Universal Theme:
 - **Theme Styles** — Color/layout presets (vita, vita-red, vita-slate)
 - **Theme Roller** — Live CSS variable preview
 - **Template Options** — Declarative component variants
+
+## CI/CD Pipeline
+
+### GitHub Actions
+
+**Continuous Integration (`ci.yml`):**
+- Runs on push to `main`/`master` and pull requests
+- **Backend Tests**: Python 3.12, pytest, ruff linter
+- **Frontend Tests**: Node 20, TypeScript typecheck, ESLint, Vitest, build
+- **Security Scan**: pip-audit, npm audit
+
+**Deployment (`deploy.yml`):**
+- Manual trigger with environment selection (staging/production)
+- Builds Docker images and pushes to GitHub Container Registry
+- Deploys via SSH to target server
+- Automatic rollback on failure
+
+**Dependabot (`dependabot.yml`):**
+- Weekly dependency updates (Monday 09:00 WIB)
+- Grouped updates to reduce PR noise
+- Covers Python, Node.js, GitHub Actions, and Docker
+
+### Required Secrets
+
+Configure these in GitHub repository settings:
+
+| Secret | Description |
+|--------|-------------|
+| `DEPLOY_HOST` | Server IP/hostname for deployment |
+| `DEPLOY_USER` | SSH username for deployment |
+| `DEPLOY_SSH_KEY` | SSH private key for deployment |
+| `DEPLOY_PATH` | Deployment directory path on server |
+
+### Status Badges
+
+```markdown
+[![CI](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/ci.yml)
+[![Deploy](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/deploy.yml/badge.svg)](https://github.com/eraowl/eraowl-ui-engine/actions/workflows/deploy.yml)
+```
 
 ## Implementation Plan
 
