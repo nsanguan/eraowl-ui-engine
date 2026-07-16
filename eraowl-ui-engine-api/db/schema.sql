@@ -1,4 +1,4 @@
-\restrict PaVDBbdbpPFPKBy70ThZpF89ct8nmJ8Gaz9TQvfuUY35OYm2fMM19mAjsmKVCC3
+\restrict dzXyEvDjwcUefQynN8jE7zaA4eGI9S6sMbd75Zq0OvYfklhtz6qdRyjGgKsZueK
 
 -- Dumped from database version 18.4 (Ubuntu 18.4-1.pgdg24.04+1)
 -- Dumped by pg_dump version 18.4 (Ubuntu 18.4-1.pgdg24.04+1)
@@ -81,10 +81,12 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.codegen_runs (
     id text NOT NULL,
-    target_id text NOT NULL,
-    page_ids text NOT NULL,
+    codegen_target_id text NOT NULL,
+    dry_run boolean NOT NULL,
+    diff_summary text,
+    files_changed text[],
+    approved_by text,
     status text DEFAULT 'pending'::text NOT NULL,
-    diff_json text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -95,9 +97,14 @@ CREATE TABLE public.codegen_runs (
 
 CREATE TABLE public.codegen_targets (
     id text NOT NULL,
-    project_path text NOT NULL,
-    framework text DEFAULT 'react'::text NOT NULL,
-    config_json text DEFAULT '{}'::text NOT NULL,
+    page_id text NOT NULL,
+    project_root text NOT NULL,
+    target_subpath text NOT NULL,
+    allowed_write_globs text[] DEFAULT ARRAY['apps/web/src/pages/generated/**'::text, 'apps/web/src/components/generated/**'::text] NOT NULL,
+    framework_detected text,
+    last_scanned_at timestamp with time zone,
+    last_generated_at timestamp with time zone,
+    last_commit_sha text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -107,11 +114,11 @@ CREATE TABLE public.codegen_targets (
 --
 
 CREATE TABLE public.component_catalog (
-    id text NOT NULL,
-    name text NOT NULL,
-    category text DEFAULT 'basic'::text NOT NULL,
-    prop_schema text NOT NULL,
-    default_props text DEFAULT '{}'::text NOT NULL,
+    component_type text NOT NULL,
+    prop_schema jsonb NOT NULL,
+    template_options jsonb DEFAULT '{}'::jsonb NOT NULL,
+    is_custom boolean DEFAULT false NOT NULL,
+    registered_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -124,7 +131,9 @@ CREATE TABLE public.page_layouts (
     id text NOT NULL,
     page_id text NOT NULL,
     version integer DEFAULT 1 NOT NULL,
-    layout_json text NOT NULL,
+    layout_json jsonb NOT NULL,
+    is_published boolean DEFAULT false NOT NULL,
+    created_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -135,9 +144,12 @@ CREATE TABLE public.page_layouts (
 
 CREATE TABLE public.pages (
     id text NOT NULL,
+    tenant_id text DEFAULT 'default'::text NOT NULL,
     name text NOT NULL,
     route text DEFAULT '/'::text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
+    schema_version text DEFAULT '1.0.0'::text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone
@@ -149,11 +161,11 @@ CREATE TABLE public.pages (
 --
 
 CREATE TABLE public.resolver_catalog (
-    id text NOT NULL,
-    name text NOT NULL,
-    module_path text NOT NULL,
-    input_schema text NOT NULL,
-    output_schema text NOT NULL,
+    resolver_key text NOT NULL,
+    description text NOT NULL,
+    param_schema jsonb NOT NULL,
+    registered_by text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -172,10 +184,18 @@ CREATE TABLE public.schema_migrations (
 --
 
 CREATE TABLE public.theme_catalog (
-    id text NOT NULL,
-    name text NOT NULL,
-    description text DEFAULT ''::text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    theme_id text NOT NULL,
+    tenant_id text,
+    display_name text NOT NULL,
+    description text,
+    base_tokens jsonb NOT NULL,
+    template_options jsonb NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    schema_version text DEFAULT '1.0.0'::text NOT NULL,
+    created_by text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -184,10 +204,13 @@ CREATE TABLE public.theme_catalog (
 --
 
 CREATE TABLE public.theme_overrides (
-    id text NOT NULL,
+    override_id text NOT NULL,
     theme_id text NOT NULL,
-    component_name text NOT NULL,
-    override_json text NOT NULL,
+    style_id text,
+    tenant_id text NOT NULL,
+    token_path text NOT NULL,
+    token_value jsonb NOT NULL,
+    created_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -197,9 +220,14 @@ CREATE TABLE public.theme_overrides (
 --
 
 CREATE TABLE public.theme_styles (
-    id text NOT NULL,
+    style_id text NOT NULL,
     theme_id text NOT NULL,
-    style_json text NOT NULL,
+    tenant_id text,
+    style_key text NOT NULL,
+    display_name text NOT NULL,
+    delta_tokens jsonb NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    created_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -221,19 +249,11 @@ ALTER TABLE ONLY public.codegen_targets
 
 
 --
--- Name: component_catalog component_catalog_name_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.component_catalog
-    ADD CONSTRAINT component_catalog_name_key UNIQUE (name);
-
-
---
 -- Name: component_catalog component_catalog_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.component_catalog
-    ADD CONSTRAINT component_catalog_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT component_catalog_pkey PRIMARY KEY (component_type);
 
 
 --
@@ -253,19 +273,11 @@ ALTER TABLE ONLY public.pages
 
 
 --
--- Name: resolver_catalog resolver_catalog_name_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.resolver_catalog
-    ADD CONSTRAINT resolver_catalog_name_key UNIQUE (name);
-
-
---
 -- Name: resolver_catalog resolver_catalog_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.resolver_catalog
-    ADD CONSTRAINT resolver_catalog_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT resolver_catalog_pkey PRIMARY KEY (resolver_key);
 
 
 --
@@ -277,19 +289,11 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: theme_catalog theme_catalog_name_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.theme_catalog
-    ADD CONSTRAINT theme_catalog_name_key UNIQUE (name);
-
-
---
 -- Name: theme_catalog theme_catalog_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.theme_catalog
-    ADD CONSTRAINT theme_catalog_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT theme_catalog_pkey PRIMARY KEY (theme_id);
 
 
 --
@@ -297,7 +301,7 @@ ALTER TABLE ONLY public.theme_catalog
 --
 
 ALTER TABLE ONLY public.theme_overrides
-    ADD CONSTRAINT theme_overrides_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT theme_overrides_pkey PRIMARY KEY (override_id);
 
 
 --
@@ -305,14 +309,22 @@ ALTER TABLE ONLY public.theme_overrides
 --
 
 ALTER TABLE ONLY public.theme_styles
-    ADD CONSTRAINT theme_styles_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT theme_styles_pkey PRIMARY KEY (style_id);
 
 
 --
--- Name: idx_codegen_runs_target_id; Type: INDEX; Schema: public; Owner: -
+-- Name: theme_styles theme_styles_theme_id_tenant_id_style_key_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_codegen_runs_target_id ON public.codegen_runs USING btree (target_id);
+ALTER TABLE ONLY public.theme_styles
+    ADD CONSTRAINT theme_styles_theme_id_tenant_id_style_key_key UNIQUE (theme_id, tenant_id, style_key);
+
+
+--
+-- Name: idx_codegen_runs_target; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_codegen_runs_target ON public.codegen_runs USING btree (codegen_target_id);
 
 
 --
@@ -337,25 +349,54 @@ CREATE INDEX idx_pages_route ON public.pages USING btree (route) WHERE (deleted_
 
 
 --
--- Name: idx_theme_overrides_theme_id; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_pages_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_theme_overrides_theme_id ON public.theme_overrides USING btree (theme_id);
-
-
---
--- Name: idx_theme_styles_theme_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_theme_styles_theme_id ON public.theme_styles USING btree (theme_id);
+CREATE INDEX idx_pages_tenant ON public.pages USING btree (tenant_id);
 
 
 --
--- Name: codegen_runs codegen_runs_target_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: idx_ui_page_layouts_json; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ui_page_layouts_json ON public.page_layouts USING gin (layout_json);
+
+
+--
+-- Name: idx_ui_theme_overrides_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ui_theme_overrides_lookup ON public.theme_overrides USING btree (theme_id, style_id, tenant_id);
+
+
+--
+-- Name: idx_ui_theme_styles_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ui_theme_styles_lookup ON public.theme_styles USING btree (theme_id, tenant_id);
+
+
+--
+-- Name: uq_ui_theme_catalog_default; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_ui_theme_catalog_default ON public.theme_catalog USING btree (theme_id) WHERE is_default;
+
+
+--
+-- Name: codegen_runs codegen_runs_codegen_target_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.codegen_runs
-    ADD CONSTRAINT codegen_runs_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.codegen_targets(id) ON DELETE CASCADE;
+    ADD CONSTRAINT codegen_runs_codegen_target_id_fkey FOREIGN KEY (codegen_target_id) REFERENCES public.codegen_targets(id) ON DELETE CASCADE;
+
+
+--
+-- Name: codegen_targets codegen_targets_page_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.codegen_targets
+    ADD CONSTRAINT codegen_targets_page_id_fkey FOREIGN KEY (page_id) REFERENCES public.pages(id) ON DELETE CASCADE;
 
 
 --
@@ -367,11 +408,19 @@ ALTER TABLE ONLY public.page_layouts
 
 
 --
+-- Name: theme_overrides theme_overrides_style_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.theme_overrides
+    ADD CONSTRAINT theme_overrides_style_id_fkey FOREIGN KEY (style_id) REFERENCES public.theme_styles(style_id) ON DELETE CASCADE;
+
+
+--
 -- Name: theme_overrides theme_overrides_theme_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.theme_overrides
-    ADD CONSTRAINT theme_overrides_theme_id_fkey FOREIGN KEY (theme_id) REFERENCES public.theme_catalog(id) ON DELETE CASCADE;
+    ADD CONSTRAINT theme_overrides_theme_id_fkey FOREIGN KEY (theme_id) REFERENCES public.theme_catalog(theme_id) ON DELETE CASCADE;
 
 
 --
@@ -379,14 +428,14 @@ ALTER TABLE ONLY public.theme_overrides
 --
 
 ALTER TABLE ONLY public.theme_styles
-    ADD CONSTRAINT theme_styles_theme_id_fkey FOREIGN KEY (theme_id) REFERENCES public.theme_catalog(id) ON DELETE CASCADE;
+    ADD CONSTRAINT theme_styles_theme_id_fkey FOREIGN KEY (theme_id) REFERENCES public.theme_catalog(theme_id) ON DELETE CASCADE;
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PaVDBbdbpPFPKBy70ThZpF89ct8nmJ8Gaz9TQvfuUY35OYm2fMM19mAjsmKVCC3
+\unrestrict dzXyEvDjwcUefQynN8jE7zaA4eGI9S6sMbd75Zq0OvYfklhtz6qdRyjGgKsZueK
 
 
 --

@@ -1,4 +1,8 @@
-"""FastAPI router for Pages & Layouts."""
+"""FastAPI router for Pages & Layouts.
+
+§6.3 — Every endpoint requires Auth/RBAC.
+§9.1 Rule 2 — Every new endpoint must have Depends(require_role(...))
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.security import get_current_user, require_role
 from app.modules.ui_designer.schemas import (
     LayoutCreate,
     LayoutRead,
@@ -27,12 +32,20 @@ _layout_svc = LayoutService()
 # ── Pages ────────────────────────────────────────────────────────────────────
 
 @router.get("/pages", response_model=PageList)
-async def list_pages(db: Annotated[AsyncSession, Depends(get_db)]) -> PageList:
+async def list_pages(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict, Depends(get_current_user)],
+) -> PageList:
     items = await _page_svc.list_all(db)
     return PageList(items=[PageRead.model_validate(i) for i in items], total=len(items))
 
 
-@router.post("/pages", response_model=PageRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/pages",
+    response_model=PageRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("ui_designer.editor", "ui_designer.admin"))],
+)
 async def create_page(
     payload: PageCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -45,12 +58,17 @@ async def create_page(
 async def get_page(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict, Depends(get_current_user)],
 ) -> PageRead:
     page = await _page_svc.get_or_404(db, page_id)
     return PageRead.model_validate(page)
 
 
-@router.patch("/pages/{page_id}", response_model=PageRead)
+@router.patch(
+    "/pages/{page_id}",
+    response_model=PageRead,
+    dependencies=[Depends(require_role("ui_designer.editor", "ui_designer.admin"))],
+)
 async def update_page(
     page_id: str,
     payload: PageUpdate,
@@ -62,7 +80,11 @@ async def update_page(
     return PageRead.model_validate(page)
 
 
-@router.delete("/pages/{page_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/pages/{page_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("ui_designer.admin"))],
+)
 async def delete_page(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -72,7 +94,12 @@ async def delete_page(
 
 # ── Layouts ──────────────────────────────────────────────────────────────────
 
-@router.post("/layouts", response_model=LayoutRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/layouts",
+    response_model=LayoutRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("ui_designer.editor", "ui_designer.admin"))],
+)
 async def create_layout(
     payload: LayoutCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -85,6 +112,7 @@ async def create_layout(
 async def get_latest_layout(
     page_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict, Depends(get_current_user)],
 ) -> LayoutRead:
     layout = await _layout_svc.get_latest(db, page_id)
     if layout is None:

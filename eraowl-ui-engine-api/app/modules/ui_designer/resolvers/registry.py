@@ -1,42 +1,58 @@
-"""Resolver registry – §6.1.
+"""Resolver registry — §6.1.
 
-Discovers and manages data resolvers that fetch runtime data for components.
+Whitelisted query functions only. No raw SQL, no eval, no dynamic code.
+AI Agent must NOT add resolvers without going through this whitelist.
 """
 
 from __future__ import annotations
 
-import importlib
-from typing import Any, Callable
+from typing import Awaitable, Callable
+
+# Type alias: resolver takes params dict, returns list of dicts
+QueryResolver = Callable[[dict], Awaitable[list[dict]]]
 
 
 class ResolverRegistry:
-    """Singleton registry of named data resolvers."""
+    """Singleton registry of named data resolvers.
 
-    _resolvers: dict[str, Callable[..., Any]] = {}
+    §6.1 — Security boundary: only registered resolvers can be called.
+    No dynamic eval. No raw SQL. No exceptions.
+    """
 
-    @classmethod
-    def register(cls, name: str, fn: Callable[..., Any]) -> None:
-        cls._resolvers[name] = fn
-
-    @classmethod
-    def get(cls, name: str) -> Callable[..., Any]:
-        if name not in cls._resolvers:
-            raise KeyError(f"Resolver '{name}' not found")
-        return cls._resolvers[name]
+    _resolvers: dict[str, QueryResolver] = {}
 
     @classmethod
-    def list_names(cls) -> list[str]:
+    def register(cls, key: str, fn: QueryResolver) -> None:
+        """Register a resolver function. Raises if already registered."""
+        if key in cls._resolvers:
+            raise ValueError(f"Resolver '{key}' already registered")
+        cls._resolvers[key] = fn
+
+    @classmethod
+    async def resolve(cls, key: str, params: dict) -> list[dict]:
+        """Execute a registered resolver. Raises KeyError if not found."""
+        if key not in cls._resolvers:
+            raise KeyError(f"Unregistered resolver: {key}")
+        return await cls._resolvers[key](params)
+
+    @classmethod
+    def get(cls, key: str) -> QueryResolver:
+        """Get a resolver function without executing it."""
+        if key not in cls._resolvers:
+            raise KeyError(f"Unregistered resolver: {key}")
+        return cls._resolvers[key]
+
+    @classmethod
+    def list_keys(cls) -> list[str]:
+        """List all registered resolver keys."""
         return sorted(cls._resolvers.keys())
 
     @classmethod
-    def load_module(cls, module_path: str, name: str | None = None) -> None:
-        """Dynamically import a resolver module and register its ``resolve`` callable."""
-        mod = importlib.import_module(module_path)
-        fn = getattr(mod, "resolve", None)
-        if fn is None:
-            raise ImportError(f"Module {module_path} has no 'resolve' function")
-        cls.register(name or module_path.rsplit(".", 1)[-1], fn)
+    def is_registered(cls, key: str) -> bool:
+        """Check if a resolver is registered."""
+        return key in cls._resolvers
 
     @classmethod
     def clear(cls) -> None:
+        """Clear all resolvers (for testing only)."""
         cls._resolvers.clear()

@@ -35,6 +35,25 @@ class Settings(BaseSettings):
     TARGET_PROJECT_ROOT: str = "/u01/eraowl-ops"
     CODEGEN_SANDBOX_DIR: str = "/tmp/codegen_sandbox"
 
+    # ── AI Provider ─────────────────────────────────────────────────────────
+    AI_PROVIDER: str = "openrouter"
+    AI_API_KEY: str = ""
+    AI_MODEL: str = "deepseek/deepseek-v4-flash"
+    AI_BASE_URL: str = "https://openrouter.ai/api/v1"
+    AI_MAX_TOKENS: int = 4096
+    AI_TEMPERATURE: float = 0.7
+    AI_TIMEOUT: int = 120
+
+    # ── AI Fallback Provider ────────────────────────────────────────────────
+    AI_FALLBACK_PROVIDER: str | None = None
+    AI_FALLBACK_API_KEY: str = ""
+    AI_FALLBACK_MODEL: str | None = None
+
+    # ── AI Feature Flags ────────────────────────────────────────────────────
+    AI_CODEGEN_ENABLED: bool = True
+    AI_LAYOUT_SUGGESTIONS: bool = True
+    AI_COMPONENT_DISCOVERY: bool = True
+
     # ── Logging ──────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
 

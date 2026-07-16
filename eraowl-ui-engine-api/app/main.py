@@ -1,4 +1,8 @@
-"""Application entry-point."""
+"""Application entry-point.
+
+§2.2 — Layered Architecture: L2 API Layer (FastAPI)
+§6.3 — Auth/RBAC middleware on every endpoint
+"""
 
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
@@ -12,6 +16,9 @@ from app.core.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # startup: init DB pools, Redis, telemetry
+    from app.modules.ui_designer.resolvers.builtin import register_builtin_resolvers
+
+    register_builtin_resolvers()
     yield
     # shutdown: close pools
 
@@ -29,12 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ── Auth middleware placeholder ──────────────────────────────────────────────
-# @app.middleware("http")
-# async def auth_middleware(request, call_next):
-#     ...
 
 
 # ── Routers ─────────────────────────────────────────────────────────────────

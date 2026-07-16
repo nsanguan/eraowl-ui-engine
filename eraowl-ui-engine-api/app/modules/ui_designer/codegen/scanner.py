@@ -33,7 +33,19 @@ class ProjectScanner:
 
     def __init__(self, root: str | Path, ignore: list[str] | None = None) -> None:
         self.root = Path(root)
-        self.ignore = ignore or ScanManifest().ignored_patterns
+        self.ignore = ignore or ["node_modules/**", ".git/**", "dist/**", "build/**"]
+
+    def _should_ignore(self, rel_path: str) -> bool:
+        """Check if a relative path should be ignored."""
+        parts = Path(rel_path).parts
+        for pattern in self.ignore:
+            # Check if any part of the path matches the pattern
+            if any(fnmatch.fnmatch(part, pattern.rstrip("/**")) for part in parts):
+                return True
+            # Also check full path match
+            if fnmatch.fnmatch(rel_path, pattern):
+                return True
+        return False
 
     def scan(self) -> ScanManifest:
         import hashlib
@@ -43,7 +55,7 @@ class ProjectScanner:
             if not path.is_file():
                 continue
             rel = str(path.relative_to(self.root))
-            if any(fnmatch.fnmatch(rel, pat) for pat in self.ignore):
+            if self._should_ignore(rel):
                 continue
             content = path.read_bytes()
             manifest.files.append(
