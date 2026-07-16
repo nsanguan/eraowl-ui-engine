@@ -53,7 +53,14 @@ class TestComponentTypesSourceOfTruth:
     """§9 — the AI prompt and schema enum must agree on casing."""
 
     def test_component_types_match_schema_enum(self):
-        assert COMPONENT_TYPES == ["Region", "Lov", "LovSelect"]
+        expected = [
+            "Region", "GridRow", "GridColumn",
+            "InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput",
+            "Lov", "LovSelect",
+            "Table", "Card",
+            "Button", "IconButton", "Link",
+        ]
+        assert expected == COMPONENT_TYPES
 
 
 class TestValidateLayoutJson:

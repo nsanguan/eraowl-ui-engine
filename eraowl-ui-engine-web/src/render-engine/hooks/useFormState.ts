@@ -12,10 +12,14 @@ export function useFormState() {
   const errors = useRenderStore((s) => s.errors);
   const submitState = useRenderStore((s) => s.submitState);
 
-  // Return stable action references directly from the store —
-  // Zustand guarantees these are referentially stable across renders.
-  const { setFieldValue, setFieldTouched, setErrors, setSubmitState, reset } =
-    useRenderStore.getState();
+  // Use hooks to subscribe to store actions — this guarantees the refs stay
+  // current even if Zustand internals ever replace the action functions,
+  // and avoids the stale-closure footgun of calling getState() once at mount.
+  const setFieldValue = useRenderStore((s) => s.setFieldValue);
+  const setFieldTouched = useRenderStore((s) => s.setFieldTouched);
+  const setErrors = useRenderStore((s) => s.setErrors);
+  const setSubmitState = useRenderStore((s) => s.setSubmitState);
+  const reset = useRenderStore((s) => s.reset);
 
   return {
     formValues,

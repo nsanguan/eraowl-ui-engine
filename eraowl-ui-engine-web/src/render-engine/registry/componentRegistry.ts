@@ -6,6 +6,12 @@ import { LovSelect } from "../components/LovSelect";
 import { GridRow } from "../components/GridRow";
 import { GridColumn } from "../components/GridColumn";
 import { InputText } from "../components/InputText";
+import { Textarea } from "../components/Textarea";
+import { Select } from "../components/Select";
+import { Checkbox } from "../components/Checkbox";
+import { RadioGroup } from "../components/RadioGroup";
+import { DatePicker } from "../components/DatePicker";
+import { NumberInput } from "../components/NumberInput";
 import { Table } from "../components/Table";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
@@ -25,6 +31,12 @@ const registryMap: Record<string, ComponentType<any>> = {
   gridrow: GridRow,
   gridcolumn: GridColumn,
   inputtext: InputText,
+  textarea: Textarea,
+  select: Select,
+  checkbox: Checkbox,
+  radiogroup: RadioGroup,
+  datepicker: DatePicker,
+  numberinput: NumberInput,
   table: Table,
   card: Card,
   button: Button,
@@ -45,6 +57,12 @@ export const componentMeta: Record<string, ComponentEntry> = {
   gridrow: { type: GridRow as ComponentType<any>, displayName: "Grid Row", category: "layout" },
   gridcolumn: { type: GridColumn as ComponentType<any>, displayName: "Grid Column", category: "layout" },
   inputtext: { type: InputText as ComponentType<any>, displayName: "Input Text", category: "form" },
+  textarea: { type: Textarea as ComponentType<any>, displayName: "Textarea", category: "form" },
+  select: { type: Select as ComponentType<any>, displayName: "Select", category: "form" },
+  checkbox: { type: Checkbox as ComponentType<any>, displayName: "Checkbox", category: "form" },
+  radiogroup: { type: RadioGroup as ComponentType<any>, displayName: "Radio Group", category: "form" },
+  datepicker: { type: DatePicker as ComponentType<any>, displayName: "Date Picker", category: "form" },
+  numberinput: { type: NumberInput as ComponentType<any>, displayName: "Number Input", category: "form" },
   table: { type: Table as ComponentType<any>, displayName: "Table", category: "data" },
   card: { type: Card as ComponentType<any>, displayName: "Card", category: "data" },
   button: { type: Button as ComponentType<any>, displayName: "Button", category: "action" },

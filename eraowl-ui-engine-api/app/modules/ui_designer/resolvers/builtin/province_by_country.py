@@ -13,7 +13,7 @@ async def resolve(params: dict[str, Any]) -> list[dict[str, str]]:
     """Return provinces for ``params['country_code']``."""
     country_code = params.get("country_code", "US").upper()
     # Stub data — replace with DB / API lookup via ORM (never raw SQL)
-    _PROVINCES: dict[str, list[dict[str, str]]] = {
+    provinces: dict[str, list[dict[str, str]]] = {
         "TH": [
             {"code": "BKK", "name": "Bangkok"},
             {"code": "CNX", "name": "Chiang Mai"},
@@ -30,4 +30,4 @@ async def resolve(params: dict[str, Any]) -> list[dict[str, str]]:
             {"code": "GD", "name": "Guangdong"},
         ],
     }
-    return _PROVINCES.get(country_code, [])
+    return provinces.get(country_code, [])

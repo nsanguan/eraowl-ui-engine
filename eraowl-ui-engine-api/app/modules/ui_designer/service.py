@@ -2,26 +2,39 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.ui_designer.models import Page, PageLayout
-from app.modules.ui_designer.schemas import LayoutCreate, PageCreate, PageUpdate
 from app.shared.base_crud import BaseCRUDService
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.modules.ui_designer.schemas import LayoutCreate, PageCreate, PageUpdate
+
+logger = logging.getLogger(__name__)
 
 
 def _as_owner_uuid(owner_id: str | None) -> uuid.UUID | None:
-    """Coerce a JWT subject into a UUID, or None if absent/invalid."""
+    """Coerce a JWT subject into a UUID, or ``None`` if absent.
+
+    Raises :class:`ValueError` when ``owner_id`` is present but not a valid
+    UUID — this prevents silent disablement of owner scoping that would occur
+    if we returned ``None`` for a malformed subject claim.
+    """
     if owner_id is None:
         return None
     try:
         return uuid.UUID(str(owner_id))
     except (ValueError, AttributeError, TypeError):
-        return None
+        logger.warning("Invalid owner_id UUID value: %r", owner_id)
+        raise ValueError(f"Invalid owner_id: {owner_id!r} is not a valid UUID") from None
 
 
 class PageService(BaseCRUDService[Page]):
@@ -47,7 +60,7 @@ class PageService(BaseCRUDService[Page]):
         when the page does not exist within the caller's scope (callers map this
         to 404 to avoid leaking the existence of other users' pages).
         """
-        stmt = select(Page).where(Page.id == page_id, Page.deleted_at == None)  # type: ignore[arg-type]
+        stmt = select(Page).where(Page.id == page_id, Page.deleted_at is None)  # type: ignore[arg-type]
         if not is_admin:
             stmt = stmt.where(Page.owner_id == _as_owner_uuid(owner_id))  # type: ignore[arg-type]
         result = await db.execute(stmt)
@@ -102,7 +115,7 @@ class PageService(BaseCRUDService[Page]):
         """
         base = select(Page)
         if not include_deleted:
-            base = base.where(Page.deleted_at == None)  # type: ignore[arg-type]
+            base = base.where(Page.deleted_at is None)  # type: ignore[arg-type]
         if not is_admin:
             base = base.where(Page.owner_id == _as_owner_uuid(owner_id))  # type: ignore[arg-type]
 
@@ -113,16 +126,42 @@ class PageService(BaseCRUDService[Page]):
         result = await db.execute(rows_stmt)
         return list(result.scalars().all()), total
 
-    async def list_by_route(self, db: AsyncSession, route_prefix: str) -> list[Page]:
+    async def list_by_route(
+        self,
+        db: AsyncSession,
+        route_prefix: str,
+        *,
+        include_deleted: bool = False,
+        owner_id: str | None = None,
+        is_admin: bool = False,
+    ) -> list[Page]:
+        """Return pages whose route starts with ``route_prefix``.
+
+        Admins see all matching pages; non-admins are scoped to pages they own.
+        By default, soft-deleted pages are excluded.
+        """
         stmt = select(Page).where(Page.route.startswith(route_prefix))  # type: ignore[arg-type]
+        if not include_deleted:
+            stmt = stmt.where(Page.deleted_at is None)  # type: ignore[arg-type]
+        if not is_admin:
+            stmt = stmt.where(Page.owner_id == _as_owner_uuid(owner_id))  # type: ignore[arg-type]
         result = await db.execute(stmt)
         return list(result.scalars().all())
 
 
 class LayoutService:
     async def create(self, db: AsyncSession, payload: LayoutCreate, created_by: str | None = None) -> PageLayout:
+        # Determine the next version for this page.
+        stmt = (
+            select(func.max(PageLayout.version))
+            .where(PageLayout.page_id == payload.page_id)  # type: ignore[arg-type]
+        )
+        result = await db.execute(stmt)
+        max_version = result.scalar_one() or 0
+
         layout = PageLayout(
             page_id=payload.page_id,
+            version=max_version + 1,
             layout_json=payload.layout_json,
             created_by=created_by,
         )

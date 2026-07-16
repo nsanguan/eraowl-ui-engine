@@ -2,6 +2,8 @@
 
 import uuid
 
+import pytest
+
 from app.core.security import is_admin, user_id
 from app.modules.ui_designer.service import _as_owner_uuid
 
@@ -29,7 +31,8 @@ class TestOwnerUuidCoercion:
         assert _as_owner_uuid(u) == uuid.UUID(u)
 
     def test_invalid_uuid(self):
-        assert _as_owner_uuid("not-a-uuid") is None
+        with pytest.raises(ValueError, match="not a valid UUID"):
+            _as_owner_uuid("not-a-uuid")
 
     def test_none(self):
         assert _as_owner_uuid(None) is None

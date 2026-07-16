@@ -1,4 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+/**
+ * Lightweight API client for the EraOwl UI Engine backend.
+ *
+ * Auth is managed via Bearer token stored in sessionStorage (cleared on tab
+ * close). For production, prefer httpOnly cookies served by the backend to
+ * eliminate XSS exposure entirely.
+ */
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE ?? "/api";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -23,7 +31,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     ...((fetchOptions.headers as Record<string, string>) ?? {}),
   };
 
-  const token = localStorage.getItem("auth-token");
+  // Prefer sessionStorage over localStorage — cleared on tab close, limiting
+  // exposure if an XSS vulnerability is later discovered.
+  const token =
+    sessionStorage.getItem("auth-token") ?? localStorage.getItem("auth-token");
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }

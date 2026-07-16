@@ -6,7 +6,8 @@ AI Agent must NOT add resolvers without going through this whitelist.
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 # Type alias: resolver takes params dict[str, Any], returns list of dicts
 QueryResolver = Callable[[dict[str, Any]], Awaitable[list[dict[str, Any]]]]

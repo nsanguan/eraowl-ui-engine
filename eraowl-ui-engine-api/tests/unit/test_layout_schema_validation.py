@@ -4,8 +4,9 @@ Tests that malformed layout_json is rejected by the schema validator.
 """
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 SCHEMA_PATH = Path(__file__).parent.parent.parent / "app" / "schema_validation" / "layout_schema_v1.json"
 

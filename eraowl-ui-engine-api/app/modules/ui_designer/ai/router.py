@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from app.core.security import require_role
 from app.modules.ui_designer.ai.orchestrator import ai_orchestrator
 from app.schema_validation.validator import validate_layout_json
+from app.shared.rate_limiter import rate_limit_ai
 
 router = APIRouter()
 
@@ -31,7 +32,10 @@ class CodegenSuggestResponse(BaseModel):
 
 @router.post(
     "/ai/generate-layout",
-    dependencies=[Depends(require_role("ui_designer.editor", "ui_designer.admin"))],
+    dependencies=[
+        Depends(require_role("ui_designer.editor", "ui_designer.admin")),
+        Depends(rate_limit_ai),
+    ],
 )
 async def generate_layout(request: LayoutGenerateRequest) -> LayoutGenerateResponse:
     layout = await ai_orchestrator.generate_layout(request.prompt)
@@ -46,7 +50,10 @@ async def generate_layout(request: LayoutGenerateRequest) -> LayoutGenerateRespo
 
 @router.post(
     "/ai/suggest-codegen",
-    dependencies=[Depends(require_role("ui_designer.codegen", "ui_designer.admin"))],
+    dependencies=[
+        Depends(require_role("ui_designer.codegen", "ui_designer.admin")),
+        Depends(rate_limit_ai),
+    ],
 )
 async def suggest_codegen(request: CodegenSuggestRequest) -> CodegenSuggestResponse:
     errors = validate_layout_json(request.layout)

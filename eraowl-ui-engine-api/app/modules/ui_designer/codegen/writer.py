@@ -9,6 +9,15 @@ _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _TRAVERSAL_RE = re.compile(r"(\.\./|\.\./$|\.\.\\|^\.\.)")
 
 
+def _matches_glob(rel_path: str, pattern: str) -> bool:
+    """Check whether ``rel_path`` matches a glob pattern.
+
+    Uses :func:`fnmatch.fnmatch` which supports ``**`` as a recursive
+    wildcard in Python >= 3.12.
+    """
+    return fnmatch.fnmatch(rel_path, pattern)
+
+
 class SandboxWriter:
     def __init__(self, project_root: str, allowed_globs: list[str]):
         self.root = Path(project_root).resolve()
@@ -21,12 +30,12 @@ class SandboxWriter:
         if filepath.startswith("~") or filepath.startswith("\\"):
             return False
 
-        # Anchor the glob check against the normalized relative path.
+        # Normalise separators.
         norm = filepath.replace("\\", "/")
         if any(sep in norm for sep in ("\\", "../", "..\\")):
             return False
 
-        return any(fnmatch.fnmatch(norm, pat) for pat in self.allowed_globs)
+        return any(_matches_glob(norm, pat) for pat in self.allowed_globs)
 
     def _resolve_contained(self, filepath: str) -> Path:
         """Resolve the destination path and verify it stays within root."""
@@ -47,7 +56,7 @@ class SandboxWriter:
 
         # Re-verify the resolved relative path still matches the globs.
         rel = full_path.relative_to(self.root).as_posix()
-        if not any(fnmatch.fnmatch(rel, pat) for pat in self.allowed_globs):
+        if not any(_matches_glob(rel, pat) for pat in self.allowed_globs):
             raise PermissionError(f"Write not allowed: {filepath} (resolved path not in allowed_write_globs)")
 
         return full_path

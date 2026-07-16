@@ -6,27 +6,33 @@ const mockState = {
   touched: {} as Record<string, boolean>,
   errors: {} as Record<string, string>,
   submitState: 'idle' as 'idle' | 'validating' | 'ready' | 'submitting' | 'error',
+  setFieldValue: vi.fn((name: string, value: unknown) => {
+    mockState.formValues = { ...mockState.formValues, [name]: value }
+    mockState.touched = { ...mockState.touched, [name]: true }
+  }),
+  setFieldTouched: vi.fn((name: string, isTouched: boolean) => {
+    mockState.touched = { ...mockState.touched, [name]: isTouched }
+  }),
+  setErrors: vi.fn((errors: Record<string, string>) => {
+    mockState.errors = errors
+  }),
+  setSubmitState: vi.fn((state: 'idle' | 'validating' | 'ready' | 'submitting' | 'error') => {
+    mockState.submitState = state
+  }),
+  reset: vi.fn(() => {
+    mockState.formValues = {}
+    mockState.touched = {}
+    mockState.errors = {}
+    mockState.submitState = 'idle'
+  }),
+  broadcast: vi.fn(),
 }
 
-const mockSetFieldValue = vi.fn((name: string, value: unknown) => {
-  mockState.formValues = { ...mockState.formValues, [name]: value }
-  mockState.touched = { ...mockState.touched, [name]: true }
-})
-const mockSetFieldTouched = vi.fn((name: string, isTouched: boolean) => {
-  mockState.touched = { ...mockState.touched, [name]: isTouched }
-})
-const mockSetErrors = vi.fn((errors: Record<string, string>) => {
-  mockState.errors = errors
-})
-const mockSetSubmitState = vi.fn((state: 'idle' | 'validating' | 'ready' | 'submitting' | 'error') => {
-  mockState.submitState = state
-})
-const mockReset = vi.fn(() => {
-  mockState.formValues = {}
-  mockState.touched = {}
-  mockState.errors = {}
-  mockState.submitState = 'idle'
-})
+const mockSetFieldValue = mockState.setFieldValue
+const mockSetFieldTouched = mockState.setFieldTouched
+const mockSetErrors = mockState.setErrors
+const mockSetSubmitState = mockState.setSubmitState
+const mockReset = mockState.reset
 
 vi.mock('../../store/useRenderStore', () => ({
   useRenderStore: Object.assign(

@@ -34,7 +34,15 @@
       "required": ["id", "type", "position"],
       "properties": {
         "id": { "type": "string" },
-        "type": { "enum": ["Region", "Lov", "LovSelect"] },
+        "type": {
+          "enum": [
+            "Region", "GridRow", "GridColumn",
+            "InputText", "Textarea", "Select", "Checkbox", "RadioGroup", "DatePicker", "NumberInput",
+            "Lov", "LovSelect",
+            "Table", "Card",
+            "Button", "IconButton", "Link"
+          ]
+        },
         "position": {
           "type": "object",
           "required": ["x", "y", "width", "height"],

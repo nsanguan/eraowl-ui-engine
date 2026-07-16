@@ -14,6 +14,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
     css: false,
+    exclude: ['node_modules', 'tests/e2e'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

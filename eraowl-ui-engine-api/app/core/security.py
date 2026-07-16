@@ -17,6 +17,21 @@ from app.core.config import settings
 _bearer = HTTPBearer(auto_error=False)
 
 
+def encode_token(payload: dict[str, Any], expires_delta: int | None = None) -> str:
+    """Create a signed JWT access token from *payload*.
+
+    If ``expires_delta`` is given (in seconds), an ``exp`` claim is added.
+    Used by tests to mint tokens without an identity provider.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    to_encode = payload.copy()
+    if expires_delta is not None:
+        expire = datetime.now(UTC) + timedelta(seconds=expires_delta)
+        to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
 def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT access token.
 
@@ -43,7 +58,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
-        )
+        ) from None
     return payload
 
 

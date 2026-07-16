@@ -4,8 +4,9 @@ Tests that malformed theme bundles are rejected.
 """
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 SCHEMA_PATH = Path(__file__).parent.parent.parent / "app" / "schema_validation" / "theme_schema_v1.json"
 

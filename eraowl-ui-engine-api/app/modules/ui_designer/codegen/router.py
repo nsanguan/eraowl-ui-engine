@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.db import get_db
@@ -14,6 +13,10 @@ from app.modules.ui_designer.codegen.generator import CodeGenerator
 from app.modules.ui_designer.codegen.scanner import ProjectScanner
 from app.modules.ui_designer.codegen.writer import SandboxWriter
 from app.modules.ui_designer.models import CodegenRun, CodegenTarget
+from app.schema_validation.validator import validate_layout_json
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -57,6 +60,24 @@ async def _get_target(db: AsyncSession, target_id: str) -> CodegenTarget:
     return target
 
 
+async def _detect_framework(scanner: ProjectScanner) -> str:
+    """Detect project framework based on config files in the project root."""
+    manifest = scanner.scan()
+    config_files = {f.rel_path for f in manifest.files}
+
+    if "next.config.js" in config_files or "next.config.ts" in config_files:
+        return "nextjs"
+    if "vite.config.ts" in config_files or "vite.config.js" in config_files:
+        return "vite-react"
+    if "angular.json" in config_files:
+        return "angular"
+    if "vue.config.js" in config_files or "nuxt.config.ts" in config_files:
+        return "vue"
+    if "package.json" in config_files:
+        return "react (unknown bundler)"
+    return "unknown"
+
+
 @router.get(
     "/codegen-targets/{target_id}/scan",
     dependencies=[Depends(require_role("ui_designer.viewer", "ui_designer.editor", "ui_designer.admin"))],
@@ -64,8 +85,9 @@ async def _get_target(db: AsyncSession, target_id: str) -> CodegenTarget:
 async def scan_target(target_id: str) -> ScanResult:
     scanner = ProjectScanner(settings.TARGET_PROJECT_ROOT)
     scanner.scan()
+    framework = await _detect_framework(scanner)
     return ScanResult(
-        framework_detected="vite-react",
+        framework_detected=framework,
         component_style="PascalCase + named export",
     )
 
@@ -106,6 +128,15 @@ async def generate_code(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Either `layout` or `page_id` must be provided",
+        )
+
+    # §6 Security Contract: validate layout_json against JSON Schema before codegen
+    layout_json = layout.get("layout_json", layout)
+    errors = validate_layout_json(layout_json)
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": "Layout failed schema validation", "errors": errors},
         )
 
     created_by = (user or {}).get("sub") or (user or {}).get("email") or (user or {}).get("user_id")

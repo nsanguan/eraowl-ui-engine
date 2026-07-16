@@ -13,7 +13,7 @@ _SCHEMA_DIR = Path(__file__).parent
 
 def _load_schema(name: str) -> dict[str, Any]:
     path = _SCHEMA_DIR / name
-    return cast(dict[str, Any], json.loads(path.read_text()))
+    return cast("dict[str, Any]", json.loads(path.read_text()))
 
 
 # Canonical component `type` enum pulled from layout_schema_v1.json.

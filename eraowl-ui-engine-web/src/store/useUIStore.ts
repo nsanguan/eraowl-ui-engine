@@ -156,6 +156,21 @@ export const useUIStore = create<UIState>()(
         // Persist to localStorage as local backup
         localStorage.setItem("eraowl-layout", JSON.stringify(layout));
 
+        // Build a recursive component tree from the flat `components` array.
+        const buildTree = (parentId: string | null): Record<string, unknown>[] =>
+          components
+            .filter((c) => c.parentId === parentId)
+            .map((c) => ({
+              id: c.id,
+              type: c.type,
+              position: c.props.position ?? { x: 0, y: 0, width: 200, height: 40 },
+              ...c.props,
+              // Recursively include children if this component has any
+              ...(components.some((child) => child.parentId === c.id)
+                ? { components: buildTree(c.id) }
+                : {}),
+            }));
+
         // Persist to backend API
         const pageId = localStorage.getItem("eraowl-current-page-id");
         if (pageId) {
@@ -164,20 +179,7 @@ export const useUIStore = create<UIState>()(
               page_id: pageId,
               layout_json: {
                 schemaVersion: "1.0.0",
-                regions: components
-                  .filter((c) => c.parentId === null)
-                  .map((c) => ({
-                    id: c.id,
-                    title: c.name,
-                    components: components
-                      .filter((child) => child.parentId === c.id)
-                      .map((child) => ({
-                        id: child.id,
-                        type: child.type,
-                        position: child.props.position ?? { x: 0, y: 0, width: 200, height: 40 },
-                        ...child.props,
-                      })),
-                  })),
+                regions: buildTree(null),
               },
             })
             .catch((err: unknown) => {

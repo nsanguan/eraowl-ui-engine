@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 ModelT = TypeVar("ModelT", bound=SQLModel)
 
 
-class BaseCRUDService(Generic[ModelT]):
+class BaseCRUDService[ModelT: SQLModel]:
     """Minimal CRUD operations with soft-delete for SQLModel tables."""
 
     model: type[ModelT]

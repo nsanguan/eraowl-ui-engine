@@ -1,13 +1,16 @@
-"""Pydantic request / response DTOs for the UI Designer module."""
+"""Pydantic request / response DTOs for the UI Designer module.
 
-from __future__ import annotations
+All ``*Read`` models carry ``from_attributes=True`` so that
+:meth:`model_validate` works with SQLModel ORM instances.
+"""
 
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ── Pages ────────────────────────────────────────────────────────────────────
+
 
 class PageCreate(BaseModel):
     name: str
@@ -24,6 +27,8 @@ class PageUpdate(BaseModel):
 
 
 class PageRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     tenant_id: str
     name: str
@@ -42,12 +47,15 @@ class PageList(BaseModel):
 
 # ── Layouts ──────────────────────────────────────────────────────────────────
 
+
 class LayoutCreate(BaseModel):
     page_id: str
     layout_json: dict[str, Any] = Field(..., description="Layout tree object (§5.2)")
 
 
 class LayoutRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     page_id: str
     version: int
@@ -59,7 +67,10 @@ class LayoutRead(BaseModel):
 
 # ── Resolvers ────────────────────────────────────────────────────────────────
 
+
 class ResolverCatalogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     resolver_key: str
     description: str
     param_schema: dict[str, Any]
@@ -78,7 +89,10 @@ class ResolverResolveResponse(BaseModel):
 
 # ── Components ───────────────────────────────────────────────────────────────
 
+
 class ComponentCatalogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     component_type: str
     prop_schema: dict[str, Any]
     template_options: dict[str, Any]
@@ -88,7 +102,10 @@ class ComponentCatalogRead(BaseModel):
 
 # ── Themes ───────────────────────────────────────────────────────────────────
 
+
 class ThemeCatalogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     theme_id: str
     tenant_id: str | None
     display_name: str
@@ -100,6 +117,8 @@ class ThemeCatalogRead(BaseModel):
 
 
 class ThemeStyleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     style_id: str
     theme_id: str
     tenant_id: str | None
@@ -110,6 +129,8 @@ class ThemeStyleRead(BaseModel):
 
 
 class ThemeOverrideRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     override_id: str
     theme_id: str
     style_id: str | None
@@ -119,6 +140,7 @@ class ThemeOverrideRead(BaseModel):
 
 
 # ── Codegen ──────────────────────────────────────────────────────────────────
+
 
 class CodegenTargetCreate(BaseModel):
     page_id: str
@@ -131,6 +153,8 @@ class CodegenTargetCreate(BaseModel):
 
 
 class CodegenTargetRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     page_id: str
     project_root: str
@@ -149,6 +173,8 @@ class CodegenRunRequest(BaseModel):
 
 
 class CodegenRunRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     codegen_target_id: str
     dry_run: bool

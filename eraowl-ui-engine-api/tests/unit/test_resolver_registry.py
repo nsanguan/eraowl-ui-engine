@@ -7,6 +7,7 @@ Tests that the resolver registry enforces security:
 """
 
 import pytest
+
 from app.modules.ui_designer.resolvers.registry import ResolverRegistry
 
 

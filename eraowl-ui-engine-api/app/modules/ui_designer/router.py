@@ -4,8 +4,6 @@
 §9.1 Rule 2 — Every new endpoint must have Depends(require_role(...))
 """
 
-from __future__ import annotations
-
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,7 +20,7 @@ from app.modules.ui_designer.schemas import (
     PageUpdate,
 )
 from app.modules.ui_designer.service import LayoutService, PageService
-from app.schema_validation.validator import validate_layout
+from app.schema_validation.validator import validate_layout_json
 
 router = APIRouter()
 
@@ -116,7 +114,12 @@ async def create_layout(
     user: Annotated[dict[str, Any], Depends(get_current_user)],
 ) -> LayoutRead:
     # §6 Security Contract: validate layout_json against JSON Schema before persisting
-    validate_layout(payload.layout_json)
+    errors = validate_layout_json(payload.layout_json)
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": "Layout failed schema validation", "errors": errors},
+        )
     layout = await _layout_svc.create(db, payload, created_by=user.get("sub"))
     return LayoutRead.model_validate(layout)
 

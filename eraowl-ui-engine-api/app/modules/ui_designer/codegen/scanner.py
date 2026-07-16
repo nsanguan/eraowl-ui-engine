@@ -40,7 +40,7 @@ class ProjectScanner:
         parts = Path(rel_path).parts
         for pattern in self.ignore:
             # Check if any part of the path matches the pattern
-            if any(fnmatch.fnmatch(part, pattern.rstrip("/**")) for part in parts):
+            if any(fnmatch.fnmatch(part, pattern.removesuffix("/**")) for part in parts):
                 return True
             # Also check full path match
             if fnmatch.fnmatch(rel_path, pattern):

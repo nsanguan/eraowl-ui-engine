@@ -9,6 +9,7 @@ Uses OpenRouter API with configurable model. Supports:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -25,6 +26,9 @@ logger = logging.getLogger(__name__)
 # Regex to extract JSON from markdown code fences: ```json ... ``` or ``` ... ```
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*\n?(.*?)\n?\s*```", re.DOTALL)
 
+_MAX_RETRIES = 3
+_BASE_BACKOFF_S = 1.0
+
 
 def _extract_json(content: str) -> dict[str, Any]:
     """Extract JSON from AI response, handling markdown-wrapped output."""
@@ -32,7 +36,7 @@ def _extract_json(content: str) -> dict[str, Any]:
 
     # Try direct parse first
     try:
-        return cast(dict[str, Any], json.loads(content))
+        return cast("dict[str, Any]", json.loads(content))
     except json.JSONDecodeError:
         pass
 
@@ -40,7 +44,7 @@ def _extract_json(content: str) -> dict[str, Any]:
     match = _JSON_FENCE_RE.search(content)
     if match:
         try:
-            return cast(dict[str, Any], json.loads(match.group(1).strip()))
+            return cast("dict[str, Any]", json.loads(match.group(1).strip()))
         except json.JSONDecodeError:
             pass
 
@@ -98,41 +102,66 @@ class AIOrchestrator:
 
         data = response.json()
         try:
-            return cast(str, data["choices"][0]["message"]["content"])
+            return cast("str", data["choices"][0]["message"]["content"])
         except (KeyError, IndexError) as exc:
             raise AIOrchestrationError(detail=f"Unexpected AI response structure: {data}") from exc
 
-    async def _call_with_fallback(
+    async def _call_with_retry(
         self,
         messages: list[dict[str, str]],
         max_tokens: int = 2048,
         temperature: float = 0.3,
     ) -> str:
-        """Try primary provider, then fallback if configured and primary fails."""
-        try:
-            return await self._call_provider(
-                base_url=self.base_url,
-                api_key=self.api_key,
-                model=self.model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            )
-        except AIOrchestrationError:
-            if not settings.AI_FALLBACK_PROVIDER or not settings.AI_FALLBACK_API_KEY:
-                raise
+        """Try primary provider with exponential-backoff retry, then fallback."""
+        last_exc: Exception | None = None
 
-            logger.warning("Primary AI provider failed, trying fallback provider: %s", settings.AI_FALLBACK_PROVIDER)
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                return await self._call_provider(
+                    base_url=self.base_url,
+                    api_key=self.api_key,
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+            except AIOrchestrationError as exc:
+                last_exc = exc
+                if attempt < _MAX_RETRIES:
+                    delay = _BASE_BACKOFF_S * (2 ** (attempt - 1))
+                    logger.warning(
+                        "AI provider call attempt %d/%d failed: %s — retrying in %.1fs",
+                        attempt, _MAX_RETRIES, exc, delay,
+                    )
+                    await asyncio.sleep(delay)
 
-            fallback_model = settings.AI_FALLBACK_MODEL or self.model
-            return await self._call_provider(
-                base_url=settings.AI_BASE_URL,  # Same base URL (OpenRouter)
-                api_key=settings.AI_FALLBACK_API_KEY,
-                model=fallback_model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
+        # All primary retries exhausted — try fallback if configured.
+        if settings.AI_FALLBACK_PROVIDER and settings.AI_FALLBACK_API_KEY:
+            logger.warning(
+                "Primary AI provider failed after %d retries, trying fallback: %s",
+                _MAX_RETRIES,
+                settings.AI_FALLBACK_PROVIDER,
             )
+            try:
+                fallback_model = settings.AI_FALLBACK_MODEL or self.model
+                return await self._call_provider(
+                    base_url=settings.AI_BASE_URL,
+                    api_key=settings.AI_FALLBACK_API_KEY,
+                    model=fallback_model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+            except AIOrchestrationError as exc:
+                last_exc = exc
+
+        raise AIOrchestrationError(
+            detail=(
+                f"AI provider failed after {_MAX_RETRIES} retries "
+                f"(fallback {'tried' if settings.AI_FALLBACK_PROVIDER else 'not configured'}): "
+                f"{last_exc}"
+            )
+        ) from last_exc
 
     async def generate_layout(self, prompt: str) -> dict[str, Any]:
         """Generate layout_json from a natural-language prompt."""
@@ -149,7 +178,7 @@ Return ONLY valid JSON matching this schema:
       "components": [
         {{
           "id": "string",
-          "type": "Region" | "Lov" | "LovSelect",
+          "type": "<one_of_the_types>",
           "position": {{"x": 0, "y": 0, "width": 200, "height": 40}}
         }}
       ]
@@ -160,7 +189,7 @@ Return ONLY valid JSON matching this schema:
 Available component types (the "type" field MUST be EXACTLY one of these, case-sensitive): {allowed_types}.
 Do not include any explanation, just the JSON."""
 
-        content = await self._call_with_fallback(
+        content = await self._call_with_retry(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt},
@@ -181,7 +210,7 @@ Do not include any explanation, just the JSON."""
             f"Do not include any explanation, just the JSON."
         )
 
-        content = await self._call_with_fallback(
+        content = await self._call_with_retry(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Layout JSON:\n{json.dumps(layout, indent=2)}"},
