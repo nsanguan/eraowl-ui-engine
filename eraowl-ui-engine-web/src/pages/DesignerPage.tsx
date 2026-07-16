@@ -1,12 +1,18 @@
+import "../designer/designer.css";
+import { DesignerToolbar } from "../designer/toolbar/DesignerToolbar";
+import { ComponentPalette } from "../designer/palette/ComponentPalette";
+import { DesignerCanvas } from "../designer/canvas/DesignerCanvas";
+import { PropertyInspector } from "../designer/inspector/PropertyInspector";
+
 export function DesignerPage() {
   return (
     <div className="designer-page">
-      <header className="designer-page__header">
-        <h1>EraOwl UI Designer</h1>
-      </header>
-      <main className="designer-page__canvas">
-        <p>Designer canvas — drag &amp; drop components here</p>
-      </main>
+      <DesignerToolbar />
+      <div className="designer-panels">
+        <ComponentPalette />
+        <DesignerCanvas />
+        <PropertyInspector />
+      </div>
     </div>
   );
 }
