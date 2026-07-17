@@ -86,7 +86,12 @@
         "templateOptions": {
           "type": "object",
           "description": "Declarative enum/bool options per component type (§2.8)",
-          "additionalProperties": { "type": ["string", "boolean", "number"] }
+          "additionalProperties": { "type": ["string", "boolean", "number", "array", "object"] }
+        },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" },
+          "description": "Nested child components (GridColumn inside GridRow, etc.)"
         },
         "styles": {
           "type": "object",

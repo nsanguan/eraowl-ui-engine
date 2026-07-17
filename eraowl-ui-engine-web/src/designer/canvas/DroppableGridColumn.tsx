@@ -89,7 +89,7 @@ export function DroppableGridColumn({ component }: DroppableGridColumnProps) {
             </div>
           ) : (
             fields.map((field) => (
-              <FieldComponent key={field.id} component={field} />
+              <FieldComponent key={field.id} component={field} containerType="gridcol" containerId={component.id} />
             ))
           )}
         </SortableContext>

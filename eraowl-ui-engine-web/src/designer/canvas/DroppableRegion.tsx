@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useUIStore } from "../../store/useUIStore";
 import type { DesignComponent } from "../../store/useUIStore";
 import { DroppableGridRow } from "./DroppableGridRow";
+import { FieldComponent } from "./FieldComponent";
 import { getComponentMeta } from "../palette/componentRegistry";
 
 interface DroppableRegionProps {
@@ -38,7 +39,9 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
     },
   });
 
-  const gridRows = components.filter((c) => c.parentId === component.id);
+  const allChildren = components.filter((c) => c.parentId === component.id);
+  const gridRows = allChildren.filter((c) => c.type === "GridRow");
+  const directChildren = allChildren.filter((c) => c.type !== "GridRow");
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -78,20 +81,40 @@ export function DroppableRegion({ component, children }: DroppableRegionProps) {
         </div>
       </div>
       <div className="canvas-region__body">
-        <SortableContext
-          items={gridRows.map((r) => r.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {gridRows.length === 0 ? (
-            <div className="canvas-region__empty">
-              Drop Grid Row here
-            </div>
-          ) : (
-            gridRows.map((row) => (
-              <DroppableGridRow key={row.id} component={row} />
-            ))
-          )}
-        </SortableContext>
+        {allChildren.length === 0 ? (
+          <div className="canvas-region__empty">
+            Drag in Grid Row for layout, or drop form/data/action components directly
+          </div>
+        ) : (
+          <>
+            <SortableContext
+              items={gridRows.map((r) => r.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {gridRows.length > 0 ? (
+                gridRows.map((row) => (
+                  <DroppableGridRow key={row.id} component={row} />
+                ))
+              ) : (
+                <div className="canvas-region__hint">
+                  Grid Row lets you arrange components in columns
+                </div>
+              )}
+            </SortableContext>
+            {directChildren.length > 0 && (
+              <div className="canvas-region__direct-items">
+                {directChildren.map((child) => (
+                  <FieldComponent
+                    key={child.id}
+                    component={child}
+                    containerType="region"
+                    containerId={component.id}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
       {children}
     </div>

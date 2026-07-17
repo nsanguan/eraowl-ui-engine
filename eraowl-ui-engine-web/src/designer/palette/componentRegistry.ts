@@ -542,8 +542,12 @@ export const ALLOWED_DROP_TYPES: string[] = componentRegistry.map((c) => c.type)
 // Maps a container type to the set of component types it accepts.
 const CONTAINER_ACCEPTS: Record<string, string[]> = {
   canvas: ["Region", "Standard", "Hero", "ContentBlock", "ContentRow", "FlexboxContainer", "ButtonContainer", "TabsContainer", "TitleBar", "Collapsible", "InlineDialog", "HelpText", "Image", "StaticContent", "PlasqlDynamicContent", "RegionDisplaySelector", "Wizard", "ScrollBar"],
-  region: ["GridRow", "FlexboxContainer", "ContentBlock", "ContentRow", "ButtonContainer", "Collapsible", "TabsContainer", "TitleBar", "Standard", "Hero", "InlineDialog", "ScrollBar"],
-  standard: ["GridRow", "FlexboxContainer", "ContentBlock", "ContentRow", "ButtonContainer"],
+  region: ALLOWED_DROP_TYPES.filter(
+    (t) => !["Region", "GridRow", "GridColumn", "Canvas", "region", "gridrow", "gridcol"].includes(t),
+  ),
+  standard: ALLOWED_DROP_TYPES.filter(
+    (t) => !["Region", "GridRow", "GridColumn", "Canvas"].includes(t),
+  ),
   gridrow: ["GridColumn"],
   gridcol: ALLOWED_DROP_TYPES.filter(
     (t) => !["Region", "Standard", "GridRow", "GridColumn", "FlexboxContainer", "TabsContainer", "Canvas", "region", "gridrow", "gridcol"].includes(t),

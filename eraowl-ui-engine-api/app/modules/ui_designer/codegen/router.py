@@ -11,6 +11,8 @@ from sqlalchemy import desc, select
 
 from app.core.db import get_db
 from app.core.security import get_current_user, require_role
+from app.modules.ui_designer.codegen.decompiler import ParseError as DecompParseError
+from app.modules.ui_designer.codegen.decompiler import SecurityError, TsxDecompiler
 from app.modules.ui_designer.codegen.generator import CodeGenerator
 from app.modules.ui_designer.codegen.scanner import ProjectScanner
 from app.modules.ui_designer.codegen.writer import SandboxWriter
@@ -24,6 +26,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+class ReverseEngineerRequest(BaseModel):
+    file_path: str
+    """Absolute path to the .tsx file to decompile (must be under the target's project_root)."""
+
+
+class ReverseEngineerResult(BaseModel):
+    layout_json: dict[str, Any]
+    """Validated layout JSON conforming to layout_schema_v1.json."""
 
 
 class ScanResult(BaseModel):
@@ -182,6 +194,54 @@ async def delete_codegen_target(
     await db.delete(target)
     await db.commit()
     logger.info("Deleted codegen target %s", target_id)
+
+
+# ── Reverse Engineering Endpoint ─────────────────────────────────────────
+
+
+@router.post(
+    "/codegen-targets/{target_id}/reverse-engineer",
+    response_model=ReverseEngineerResult,
+    dependencies=[Depends(require_role("ui_designer.codegen", "ui_designer.admin"))],
+)
+async def reverse_engineer(
+    target_id: str,
+    payload: ReverseEngineerRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+) -> ReverseEngineerResult:
+    """Decompile a legacy .tsx file into a validated layout_json.
+
+    The file must be within the target's project_root. The resulting layout
+    is schema-validated and ready to load into the Designer canvas.
+    """
+    target = await _get_target(db, target_id)
+    project_root = target.project_root
+
+    try:
+        decompiler = TsxDecompiler()
+        layout = decompiler.decompile(
+            file_path=payload.file_path,
+            project_root=project_root,
+        )
+    except SecurityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(exc),
+        ) from None
+    except DecompParseError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from None
+    except Exception as exc:
+        logger.exception("Reverse engineering failed for %s", payload.file_path)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Reverse engineering failed: {exc}",
+        ) from None
+
+    return ReverseEngineerResult(layout_json=layout)
 
 
 # ── Scan Endpoint ────────────────────────────────────────────────────────────

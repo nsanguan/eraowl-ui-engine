@@ -8,6 +8,8 @@ import { getComponentMeta } from "../palette/componentRegistry";
 
 interface FieldComponentProps {
   component: DesignComponent;
+  containerType?: string;
+  containerId?: string;
 }
 
 function ComponentPreview({ type, props }: { type: string; props: Record<string, unknown> }) {
@@ -166,7 +168,7 @@ function ComponentPreview({ type, props }: { type: string; props: Record<string,
   }
 }
 
-export function FieldComponent({ component }: FieldComponentProps) {
+export function FieldComponent({ component, containerType, containerId }: FieldComponentProps) {
   const selectedComponentId = useUIStore((s) => s.selectedComponentId);
   const setSelectedComponent = useUIStore((s) => s.setSelectedComponent);
   const removeComponent = useUIStore((s) => s.removeComponent);
@@ -183,6 +185,8 @@ export function FieldComponent({ component }: FieldComponentProps) {
     data: {
       type: "sortable-item",
       componentType: component.type,
+      containerType: containerType ?? "",
+      containerId: containerId ?? null,
     },
   });
 
